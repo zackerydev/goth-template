@@ -1,0 +1,9 @@
+line-length = 120
+respect-gitignore = true
+force-exclude = true
+exclude = [
+  ".git/**",
+  "bin/**",
+  "tmp/**",
+  "vendor/**",
+]

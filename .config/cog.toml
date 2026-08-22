@@ -1,0 +1,9 @@
+ignore_merge_commits = true
+
+[commit_types]
+# Keep the six project-approved Conventional Commit types.
+build = {}
+ci = {}
+perf = {}
+revert = {}
+style = {}

@@ -1,0 +1,23 @@
+[default]
+locale = "en-us"
+
+[default.extend-words]
+Cocogitto = "Cocogitto"
+Echo = "Echo"
+GoTH = "GoTH"
+HTMX = "HTMX"
+Lefthook = "Lefthook"
+gofumpt = "gofumpt"
+goquery = "goquery"
+rumdl = "rumdl"
+templ = "templ"
+
+[files]
+extend-exclude = [
+  "**/*_templ.go",
+  "bin/**",
+  "tmp/**",
+  "vendor/**",
+  "assets/js/htmx.min.js",
+  "go.sum",
+]

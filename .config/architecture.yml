@@ -1,0 +1,53 @@
+version: 3
+workdir: .
+allow:
+  depOnAnyVendor: false
+  deepScan: true
+  ignoreNotFoundComponents: true
+exclude:
+  - .worktrees
+excludeFiles:
+  - "^.*_templ\\.go$"
+  - "^.*_test\\.go$"
+vendors:
+  echo:
+    in:
+      - github.com/labstack/echo/v5
+      - github.com/labstack/echo/v5/**
+  templ:
+    in:
+      - github.com/a-h/templ
+      - github.com/a-h/templ/**
+components:
+  cmd:
+    in: cmd/*
+  server:
+    in: internal/server
+  handler:
+    in: internal/handler
+  assets:
+    in: assets
+  templates:
+    in: templates
+deps:
+  cmd:
+    mayDependOn:
+      - server
+  server:
+    mayDependOn:
+      - handler
+      - assets
+    canUse:
+      - echo
+  handler:
+    mayDependOn:
+      - templates
+    canUse:
+      - templ
+  # Leaf components self-reference only to satisfy go-arch-lint's required rule shape.
+  assets:
+    mayDependOn:
+      - assets
+  templates:
+    mayDependOn:
+      - templates

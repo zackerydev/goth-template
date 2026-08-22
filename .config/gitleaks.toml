@@ -1,0 +1,4 @@
+title = "GoTH Template secret scanning"
+
+[extend]
+useDefault = true

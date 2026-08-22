@@ -1,0 +1,79 @@
+# GoTH Template
+
+A minimal base application built with Go, [Echo](https://echo.labstack.com/),
+[templ](https://templ.guide/), and [HTMX](https://htmx.org/).
+
+## Use this template
+
+Create a repository from this template, clone it, then replace the module path:
+
+```sh
+old='github.com/zackerydev/goth-template'
+new='github.com/you/your-app'
+grep -RIl --exclude-dir=.git "$old" . | xargs sed -i '' "s|$old|$new|g"
+```
+
+On Linux, omit the empty argument after `sed -i`. Rename `cmd/app` and the
+`build` task's output if the executable needs a product-specific name.
+
+## Prerequisites
+
+Install [mise](https://mise.jdx.dev/). The repository pins Go, templ, and all
+quality tools.
+
+## Setup
+
+```sh
+mise run setup
+mise run generate
+```
+
+Generated `*_templ.go` files are committed. Edit `*.templ`, then run
+`mise run generate`.
+
+## Development
+
+```sh
+mise run dev
+```
+
+The application runs at <http://localhost:8888>; templ's live-reload proxy runs
+at <http://localhost:7331>. Linked Git worktrees receive stable derived ports.
+Set `APP_PORT` or `PROXY_PORT` to override them.
+
+The home page includes one small fragment swap to prove the full stack is wired.
+Delete the `/greeting` route, handler, template, and tests when starting the
+first real feature.
+
+## Project layout
+
+```text
+cmd/app/             executable entry point
+internal/server/     Echo composition and routes
+internal/handler/    HTTP response handlers
+assets/              embedded CSS, JavaScript, and HTMX
+assets/js/htmx.min.js committed browser dependency
+templates/           templ components and generated Go
+.config/             tool and quality-gate policy
+docs/adr/            architectural decisions
+```
+
+Keep domain packages demand-driven. Add `internal/service/<domain>` or
+`internal/model` only when an implemented feature needs them, then classify the
+new package in `.config/architecture.yml`.
+
+## Commands
+
+```sh
+mise run fix       # format and synchronize the repository
+mise run check     # run every read-only quality gate
+mise run test      # race-tested, shuffled tests with coverage
+mise run build     # build bin/app
+mise run run       # run the server
+```
+
+`mise run check` verifies configuration, formatting, generated output, module
+integrity, package architecture, static analysis, prose, tests, 100% coverage of
+eligible handwritten code, the build, vulnerabilities, and committed-history
+secrets. Lefthook runs `fix`, stages the result, and runs the same checks before
+normal commits.
