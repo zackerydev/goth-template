@@ -70,7 +70,7 @@ run = [
   "mise tasks validate",
   "mise exec -- lefthook validate",
   "mise exec -- golangci-lint config verify -c .config/golangci.yml",
-  "mise exec -- cog --config .config/cog.toml check",
+  "bash .config/check-commits.sh",
   "APP_RUN_SMOKE=1 mise run run",
 ]
 
