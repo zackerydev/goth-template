@@ -23,16 +23,12 @@ instance_slug=$(printf '%s_%s' "$safe_name" "$path_hash" | cut -c1-54)
 port_seed=$((16#$path_hash))
 
 requested_app_port=${APP_PORT:-${PORT:-}}
-requested_proxy_port=${PROXY_PORT:-}
 if [ "$worktree_root" = "$primary_root" ]; then
   default_app_port=8888
-  default_proxy_port=7331
 else
   default_app_port=$((10000 + port_seed % 40000))
-  default_proxy_port=$((default_app_port + 1))
 fi
 app_port=${requested_app_port:-$default_app_port}
-proxy_port=${requested_proxy_port:-$default_proxy_port}
 
 validate_port() {
   case "$1" in
@@ -48,11 +44,6 @@ validate_port() {
 }
 
 validate_port "$app_port"
-validate_port "$proxy_port"
-if [ "$app_port" = "$proxy_port" ]; then
-  printf 'Application and proxy ports must be different; set APP_PORT and PROXY_PORT.\n' >&2
-  exit 1
-fi
 
 port_is_occupied() {
   if command -v nc >/dev/null 2>&1; then
@@ -74,21 +65,14 @@ PY
   return 2
 }
 
-if [ "${APP_RUN_SMOKE:-0}" != 1 ]; then
-  for port in "$app_port" "$proxy_port"; do
-    if port_is_occupied "$port"; then
-      printf 'Port %s is already occupied; set APP_PORT or PROXY_PORT.\n' "$port" >&2
-      exit 1
-    fi
-  done
+if [ "${APP_RUN_SMOKE:-0}" != 1 ] && port_is_occupied "$app_port"; then
+  printf 'Port %s is already occupied; set APP_PORT or PORT.\n' "$app_port" >&2
+  exit 1
 fi
 
 export APP_INSTANCE_SLUG="$instance_slug"
 export APP_PORT="$app_port"
-export PROXY_PORT="$proxy_port"
 export APP_URL="http://127.0.0.1:$app_port"
-export PROXY_URL="http://127.0.0.1:$proxy_port"
 
 printf 'Application instance: %s\n' "$APP_INSTANCE_SLUG"
 printf 'Application: %s\n' "$APP_URL"
-printf 'Live reload: %s\n' "$PROXY_URL"

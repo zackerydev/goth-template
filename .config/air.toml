@@ -1,0 +1,22 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/app ./cmd/app"
+entrypoint = ["./tmp/app", "--dev"]
+include_ext = ["go"]
+exclude_dir = ["tmp", ".git", ".worktrees"]
+exclude_file = []
+exclude_regex = []
+delay = 1000
+kill_delay = "500ms"
+log = "air-build-errors.log"
+send_interrupt = true
+stop_on_error = true
+
+[log]
+time = false
+main_only = false
+
+[misc]
+clean_on_exit = true

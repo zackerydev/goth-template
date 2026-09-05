@@ -5,5 +5,4 @@ threshold:
   total: 100
 exclude:
   paths:
-    - "_templ\\.go$"
     - "^cmd/app/"

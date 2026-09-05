@@ -10,11 +10,9 @@ Lefthook = "Lefthook"
 gofumpt = "gofumpt"
 goquery = "goquery"
 rumdl = "rumdl"
-templ = "templ"
 
 [files]
 extend-exclude = [
-  "**/*_templ.go",
   "bin/**",
   "tmp/**",
   "vendor/**",

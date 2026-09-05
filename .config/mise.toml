@@ -1,6 +1,6 @@
 [tools]
 go = "1.26.6"
-"go:github.com/a-h/templ/cmd/templ" = "v0.3.1020"
+"go:github.com/air-verse/air" = "v1.65.3"
 gofumpt = "0.9.1"
 "go:golang.org/x/tools/cmd/goimports" = "v0.36.0"
 lefthook = "2.1.10"
@@ -14,12 +14,8 @@ rumdl = "0.2.34"
 typos = "1.48.0"
 
 [tasks.dev]
-description = "Run the server with live reload"
-run = "bash -c 'source .config/worktree-env.sh && exec templ generate --watch --proxy=\"http://127.0.0.1:${APP_PORT}\" --proxyport=\"${PROXY_PORT}\" --proxybind=127.0.0.1 --cmd=\"go run ./cmd/app\"'"
-
-[tasks.generate]
-description = "Generate Go from templ templates"
-run = "templ generate"
+description = "Run Air with request-time HTML reload"
+run = "bash -c 'source .config/worktree-env.sh && exec air -c .config/air.toml'"
 
 [tasks.setup]
 description = "Install pinned tools and Git hooks"
@@ -44,11 +40,9 @@ run = [{ task = "test" }, { task = "coverage" }]
 [tasks.fix]
 description = "Fix and synchronize the whole repository"
 run = [
-  "templ fmt .",
   "mise exec -- rumdl -c .config/rumdl.toml fmt .",
-  "templ generate",
-  "find assets cmd internal templates -type f -name '*.go' ! -name '*_templ.go' -print0 | xargs -0 mise exec -- gofumpt -w",
-  "find assets cmd internal templates -type f -name '*.go' ! -name '*_templ.go' -print0 | xargs -0 mise exec -- goimports -w",
+  "find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- gofumpt -w",
+  "find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- goimports -w",
   "go mod tidy",
 ]
 
@@ -56,13 +50,9 @@ run = [
 description = "Verify handwritten Go and Markdown formatting"
 run = [
   "mise exec -- rumdl -c .config/rumdl.toml fmt --check .",
-  "find assets cmd internal templates -type f -name '*.go' ! -name '*_templ.go' -print0 | xargs -0 mise exec -- gofumpt -d",
-  "test -z \"$(find assets cmd internal templates -type f -name '*.go' ! -name '*_templ.go' -print0 | xargs -0 mise exec -- goimports -l)\"",
+  "find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- gofumpt -d",
+  "test -z \"$(find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- goimports -l)\"",
 ]
-
-[tasks.generated-check]
-description = "Verify generated output is synchronized"
-run = "templ generate --check"
 
 [tasks.config-check]
 description = "Validate task and orchestration configuration"
@@ -119,7 +109,6 @@ run = [
   { tasks = [
     "config-check",
     "format-check",
-    "generated-check",
     "module-check",
     "architecture",
     "lint",

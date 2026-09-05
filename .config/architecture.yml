@@ -7,17 +7,12 @@ allow:
 exclude:
   - .worktrees
 excludeFiles:
-  - "^.*_templ\\.go$"
   - "^.*_test\\.go$"
 vendors:
   echo:
     in:
       - github.com/labstack/echo/v5
       - github.com/labstack/echo/v5/**
-  templ:
-    in:
-      - github.com/a-h/templ
-      - github.com/a-h/templ/**
 components:
   cmd:
     in: cmd/*
@@ -44,8 +39,6 @@ deps:
   handler:
     mayDependOn:
       - templates
-    canUse:
-      - templ
   # Leaf components self-reference only to satisfy go-arch-lint's required rule shape.
   assets:
     mayDependOn:
