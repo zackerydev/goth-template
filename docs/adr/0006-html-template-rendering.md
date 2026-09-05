@@ -34,6 +34,10 @@ shell, and `main#main-content`. Partials are parsed independently and can be
 rendered directly for explicit fragment endpoints. Normal `html/template`
 escaping is always used for data.
 
+`cmd/app` constructs the renderer and HTTP handlers, then injects those handlers
+into `internal/server`. Echo construction and route registration remain confined
+to `internal/server`; HTTP adaptation remains in `internal/handler`.
+
 Production embeds all layouts, pages, and partials. The renderer parses every
 page in an isolated template set and every standalone partial during
 initialization, then reuses those immutable parsed templates. Initialization
@@ -53,15 +57,31 @@ The shared layout enables inherited HTMX boosting with
 Native requests render the complete named page. A request with
 `HX-Boosted: true` renders the escaped document title and `content` definition
 only; it excludes the doctype, document wrappers, navigation shell, and outer
-`main`. `HX-Request: true` alone and history-restoration requests render the
+`main`. Title and content execute from the same parsed page set, including in
+development, rather than independently reloading sources for each definition.
+`HX-Request: true` alone and history-restoration requests render the
 complete page. Page responses preserve existing `Vary` values and add
 `HX-Boosted` and `HX-History-Restore-Request`. Explicit partial responses do not
 render document-title markup.
 
-This decision supersedes the templ source/generation conventions in ADRs 0001
-and 0002, the proxy-port and proxy-lifecycle portions of ADR 0003, and the
-no-global-boost restriction in ADR 0004. It does not supersede the local asset,
-progressive-enhancement, worktree application-port, or persistence decisions.
+This decision supersedes the templ source/generation and startup-wiring
+conventions in [ADR 0001](0001-application-structure.md), the template-generation
+checks in [ADR 0002](0002-local-quality-gates.md), the proxy-port and
+proxy-lifecycle portions of [ADR 0003](0003-worktree-isolated-development.md),
+and the no-global-boost restriction in
+[ADR 0004](0004-progressive-htmx-and-local-assets.md). It does not supersede the
+local asset, progressive-enhancement, worktree application-port, or persistence
+decisions. Historical ADRs remain unchanged.
+
+The application port retains its primary-checkout default of `8888`, stable
+worktree derivation, `APP_PORT`/`PORT` overrides, and occupancy validation. There
+is no longer a proxy port or `PROXY_PORT` override.
+
+`mise run fix` formats Go and Markdown and tidies the module. Template generation
+and generated-output checks are removed; the 100% eligible Go coverage gate
+remains unchanged. The future sqlc generation and verification tasks described
+in [ADR 0005](0005-sqlite-persistence-tooling.md) are introduced with the first
+persistence feature, not retained as placeholder tasks.
 
 ## Consequences
 

@@ -44,7 +44,9 @@ application port.
 Air rebuilds and restarts the Go application for Go changes only. In development
 (`--dev`), HTML templates are read from the current worktree and reparsed on
 each HTML request, so an HTML edit is visible on the next request without a
-browser reload proxy. `mise run run` starts the embedded production renderer.
+browser reload proxy. Refresh the browser manually to request updated HTML.
+CSS and JavaScript are still embedded, so asset edits require a rebuild/restart.
+`mise run run` starts the embedded production renderer.
 
 The home page includes one small fragment swap to prove the full stack is wired.
 Delete the `/greeting` route, handler, template, and tests when starting the
@@ -66,8 +68,32 @@ templates/partials/greeting.html
 A native request renders the named page and receives the complete document. An
 HTMX boosted request renders the document title and page content only; ordinary
 HTMX requests and history-restoration requests receive the complete document.
-The renderer uses `html/template` escaping, embeds and validates all production
+The renderer uses `html/template` escaping, embeds and parses all production
 templates at startup, and reloads development templates per request.
+
+To add a canonical page, create `templates/pages/about.html`:
+
+```html
+{{ define "about" }}{{ template "layout" . }}{{ end }}
+
+{{ define "content" }}
+<section aria-labelledby="about-title">
+  <h1 id="about-title">About</h1>
+</section>
+{{ end }}
+```
+
+Add its HTTP handler following `internal/handler/home.go`: render `about` for a
+full document, or render `document-title` and `content` together with one
+`RenderDefinitions` call for boosted requests. Supply a `Title` field for the
+document title and retain buffering, history-restoration handling, and `Vary`
+headers. Wire the handler through `cmd/app` and register `/about` in
+`internal/server/routes.go`. Template files do not register routes automatically.
+
+The layout owns `<main>` and persistent navigation; page content must not repeat
+that shell. Link to `/about` with a normal anchor: inherited boosting handles
+navigation, and the link still works without JavaScript. See
+[ADR 0006](docs/adr/0006-html-template-rendering.md) for the rendering contract.
 
 ## Persistence
 
