@@ -6,12 +6,19 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zackerydev/goth-template/internal/handler"
 	"github.com/zackerydev/goth-template/internal/server"
+	"github.com/zackerydev/goth-template/templates"
 )
 
 func TestRoutes(t *testing.T) {
 	t.Parallel()
-	application := server.New()
+
+	renderer, err := templates.New()
+	if err != nil {
+		t.Fatalf("create renderer: %v", err)
+	}
+	application := server.New(handler.Home(renderer), handler.Greeting(renderer))
 
 	tests := []struct {
 		name       string

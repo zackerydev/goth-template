@@ -1,13 +1,14 @@
 package server
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo/v5"
 	"github.com/zackerydev/goth-template/assets"
-	"github.com/zackerydev/goth-template/internal/handler"
 )
 
-func registerRoutes(e *echo.Echo) {
+func registerRoutes(e *echo.Echo, home, greeting http.Handler) {
 	e.StaticFS("/assets/", assets.FS())
-	e.GET("/", echo.WrapHandler(handler.Home()))
-	e.GET("/greeting", echo.WrapHandler(handler.Greeting()))
+	e.GET("/", echo.WrapHandler(home))
+	e.GET("/greeting", echo.WrapHandler(greeting))
 }

@@ -33,6 +33,8 @@ deps:
   cmd:
     mayDependOn:
       - server
+      - handler
+      - templates
   server:
     mayDependOn:
       - handler

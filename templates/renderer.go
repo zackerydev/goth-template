@@ -64,16 +64,27 @@ func NewDevelopmentFS(source fs.FS) (*Renderer, error) {
 
 // Render executes the named page or standalone partial into writer.
 func (r *Renderer) Render(writer io.Writer, name string, data any) error {
+	return r.RenderDefinition(writer, name, name, data)
+}
+
+// RenderDefinition executes a named definition from a page or standalone partial.
+func (r *Renderer) RenderDefinition(writer io.Writer, page, definition string, data any) error {
 	if r == nil {
 		return errors.New("template renderer is nil")
 	}
+	if !validTemplateName(definition) {
+		return fmt.Errorf("invalid template definition %q", definition)
+	}
 
-	parsed, err := r.template(name)
+	parsed, err := r.template(page)
 	if err != nil {
 		return err
 	}
-	if err := parsed.ExecuteTemplate(writer, name, data); err != nil {
-		return fmt.Errorf("render template %q: %w", name, err)
+	if parsed.Lookup(definition) == nil {
+		return fmt.Errorf("template definition %q not found in page %q", definition, page)
+	}
+	if err := parsed.ExecuteTemplate(writer, definition, data); err != nil {
+		return fmt.Errorf("render template %q: %w", definition, err)
 	}
 	return nil
 }

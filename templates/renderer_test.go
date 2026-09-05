@@ -53,6 +53,32 @@ func TestEmbeddedTemplatesRenderPagesAndPartials(t *testing.T) {
 	}
 }
 
+func TestRendererRendersNamedDefinitions(t *testing.T) {
+	t.Parallel()
+
+	renderer, err := templates.NewProductionFS(fixtureFS("home"))
+	if err != nil {
+		t.Fatalf("create renderer: %v", err)
+	}
+
+	var content bytes.Buffer
+	if err := renderer.RenderDefinition(&content, "home", "content", nil); err != nil {
+		t.Fatalf("render content definition: %v", err)
+	}
+	if strings.Contains(content.String(), "<html>") || !strings.Contains(content.String(), "home page") {
+		t.Errorf("content definition = %q", content.String())
+	}
+	if err := renderer.RenderDefinition(&content, "home", "missing", nil); err == nil {
+		t.Error("render missing definition succeeded")
+	}
+	if err := renderer.RenderDefinition(&content, "home", "content/part", nil); err == nil {
+		t.Error("render invalid definition succeeded")
+	}
+	if err := renderer.RenderDefinition(&content, "pages/home", "content", nil); err == nil {
+		t.Error("render invalid page succeeded")
+	}
+}
+
 func TestProductionDoesNotReadSourceAfterInitialization(t *testing.T) {
 	t.Parallel()
 

@@ -6,9 +6,9 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-// New composes the application.
-func New() http.Handler {
+// New composes the application from its HTTP handlers.
+func New(home, greeting http.Handler) http.Handler {
 	e := echo.New()
-	registerRoutes(e)
+	registerRoutes(e, home, greeting)
 	return e
 }

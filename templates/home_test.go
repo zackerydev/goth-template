@@ -2,7 +2,6 @@ package templates_test
 
 import (
 	"bytes"
-	"context"
 	"strings"
 	"testing"
 
@@ -13,8 +12,12 @@ import (
 func TestHomeRendersApplicationShell(t *testing.T) {
 	t.Parallel()
 
+	renderer, err := templates.New()
+	if err != nil {
+		t.Fatalf("create renderer: %v", err)
+	}
 	var rendered bytes.Buffer
-	if err := templates.Home().Render(context.Background(), &rendered); err != nil {
+	if err := renderer.Render(&rendered, "home", templates.PageData{Title: "GoTH Template"}); err != nil {
 		t.Fatalf("render home page: %v", err)
 	}
 	if !strings.HasPrefix(strings.TrimSpace(rendered.String()), "<!doctype html>") {
@@ -28,8 +31,12 @@ func TestHomeRendersApplicationShell(t *testing.T) {
 	assertAttribute(t, document, "html", expectedAttribute{name: "lang", value: "en"})
 	assertAttribute(t, document, `meta[name="viewport"]`, expectedAttribute{name: "content", value: "width=device-width, initial-scale=1"})
 	assertAttribute(t, document, `link[rel="stylesheet"]`, expectedAttribute{name: "href", value: "/assets/css/app.css"})
+	assertAttribute(t, document, "body", expectedAttribute{name: "hx-boost", value: "true"})
+	assertAttribute(t, document, "body", expectedAttribute{name: "hx-target", value: "#main-content"})
+	assertAttribute(t, document, "body", expectedAttribute{name: "hx-swap", value: "innerHTML"})
 	assertAttribute(t, document, `button[hx-get]`, expectedAttribute{name: "hx-get", value: "/greeting"})
 	assertAttribute(t, document, `button[hx-target]`, expectedAttribute{name: "hx-target", value: "#greeting"})
+	assertAttribute(t, document, `button[hx-swap]`, expectedAttribute{name: "hx-swap", value: "outerHTML"})
 
 	if title := strings.TrimSpace(document.Find("title").Text()); title != "GoTH Template" {
 		t.Errorf("title = %q, want %q", title, "GoTH Template")
@@ -43,13 +50,22 @@ func TestHomeRendersApplicationShell(t *testing.T) {
 	if got := document.Find(`script[src="/assets/js/app.js"]`).Length(); got != 1 {
 		t.Errorf("application script count = %d, want 1", got)
 	}
+	if got := document.Find("button").FilterFunction(func(_ int, selection *goquery.Selection) bool {
+		return strings.TrimSpace(selection.Text()) == "This is my button"
+	}).Length(); got != 1 {
+		t.Errorf("local button count = %d, want 1", got)
+	}
 }
 
 func TestGreetingRendersFragment(t *testing.T) {
 	t.Parallel()
 
+	renderer, err := templates.New()
+	if err != nil {
+		t.Fatalf("create renderer: %v", err)
+	}
 	var rendered bytes.Buffer
-	if err := templates.Greeting().Render(context.Background(), &rendered); err != nil {
+	if err := renderer.Render(&rendered, "greeting", nil); err != nil {
 		t.Fatalf("render greeting: %v", err)
 	}
 	markup := rendered.String()
