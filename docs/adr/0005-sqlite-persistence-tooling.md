@@ -38,11 +38,12 @@ sqlc.yaml                   SQLite/database-sql generation policy
 ```
 
 Migration and query SQL are authoritative. Generated Go is committed so normal
-builds do not require sqlc, but `mise run generate`, `mise run fix`, and
-`mise run check` must generate or verify it once persistence exists.
-`internal/model` owns database-shaped types and adapters. Domain workflows live
-under `internal/service/<domain>` and compose generated queries; handlers do not
-call sqlc query handles directly.
+builds do not require sqlc, but sqlc installation and explicit generation or
+verification tasks are introduced with the first persistence feature. The base
+application intentionally has no generic generation task. `internal/model`
+owns database-shaped types and adapters. Domain workflows live under
+`internal/service/<domain>` and compose generated queries; handlers do not call
+sqlc query handles directly.
 
 The process opens one database handle, configures foreign keys and a busy
 timeout, applies embedded migrations to that same handle, and keeps it open for
