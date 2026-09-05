@@ -41,7 +41,7 @@ func Home() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<a class=\"skip-link\" href=\"#main-content\">Skip to main content</a><header class=\"site-header\"><a class=\"site-header__brand\" href=\"/\">GoTH Template</a></header><main id=\"main-content\"><section class=\"hero\" aria-labelledby=\"hero-title\"><h1 id=\"hero-title\">Start building.</h1><p>Go, templ, and HTMX—ready for your next app.</p><div class=\"demo\" id=\"greeting\"><button type=\"button\" hx-get=\"/greeting\" hx-target=\"#greeting\" hx-swap=\"outerHTML\">Test HTMX</button></div></section></main>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<a class=\"skip-link\" href=\"#main-content\">Skip to main content</a><header class=\"site-header\"><a class=\"site-header__brand\" href=\"/\">GoTH Template</a></header><main id=\"main-content\"><section class=\"hero\" aria-labelledby=\"hero-title\"><h1 id=\"hero-title\">Start building.</h1><p>Go, html/template, and HTMX—ready for your next app.</p><button type=\"button\">This is my button</button><div class=\"demo\" id=\"greeting\"><button type=\"button\" hx-get=\"/greeting\" hx-target=\"#greeting\" hx-swap=\"outerHTML\">Test HTMX</button></div></section></main>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
