@@ -77,6 +77,29 @@ func TestRendererRendersNamedDefinitions(t *testing.T) {
 	if err := renderer.RenderDefinition(&content, "pages/home", "content", nil); err == nil {
 		t.Error("render invalid page succeeded")
 	}
+	if err := renderer.RenderDefinitions(&content, "home", nil, nil); err == nil {
+		t.Error("render empty definitions succeeded")
+	}
+}
+
+func TestRendererRendersMultipleDefinitionsFromOnePageSet(t *testing.T) {
+	t.Parallel()
+
+	renderer, err := templates.NewProductionFS(fixtureFS("home"))
+	if err != nil {
+		t.Fatalf("create renderer: %v", err)
+	}
+
+	var output bytes.Buffer
+	if err := renderer.RenderDefinitions(&output, "home", []string{"document-title", "content"}, map[string]string{"Title": "Home"}); err != nil {
+		t.Fatalf("render definitions: %v", err)
+	}
+	if got := output.String(); !strings.Contains(got, "<title>Home</title>") || !strings.Contains(got, "home page") {
+		t.Errorf("output = %q", got)
+	}
+	if strings.Contains(output.String(), "<html>") {
+		t.Errorf("output contains the page shell: %q", output.String())
+	}
 }
 
 func TestProductionDoesNotReadSourceAfterInitialization(t *testing.T) {

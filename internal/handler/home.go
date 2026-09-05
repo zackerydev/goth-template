@@ -18,9 +18,7 @@ func Home(renderer *templates.Renderer) http.Handler {
 		var rendered bytes.Buffer
 		var err error
 		if boosted {
-			if err = renderer.Render(&rendered, "document-title", data); err == nil {
-				err = renderer.RenderDefinition(&rendered, "home", "content", data)
-			}
+			err = renderer.RenderDefinitions(&rendered, "home", []string{"document-title", "content"}, data)
 		} else {
 			err = renderer.Render(&rendered, "home", data)
 		}

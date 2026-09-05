@@ -2,6 +2,7 @@ package handler_test
 
 import (
 	"errors"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -89,6 +90,50 @@ func assertHomeResponse(t *testing.T, home http.Handler, test homeResponseTest) 
 	}
 	assertVary(t, response.Header(), "HX-Boosted")
 	assertVary(t, response.Header(), "HX-History-Restore-Request")
+}
+
+func TestBoostedHomeLoadsDevelopmentSourceOnce(t *testing.T) {
+	t.Parallel()
+
+	source := fstest.MapFS{
+		"layouts/layout.html":          &fstest.MapFile{Data: []byte(`{{ define "layout" }}{{ template "content" . }}{{ end }}`)},
+		"partials/document-title.html": &fstest.MapFile{Data: []byte(`{{ define "document-title" }}<title>{{ .Title }}</title>{{ end }}`)},
+		"partials/greeting.html":       &fstest.MapFile{Data: []byte(`{{ define "greeting" }}greeting{{ end }}`)},
+		"pages/home.html":              &fstest.MapFile{Data: []byte(`{{ define "home" }}{{ template "layout" . }}{{ end }}{{ define "content" }}content{{ end }}`)},
+	}
+	renderer, err := templates.NewDevelopmentFS(&singleOpenFS{FS: source, opened: make(map[string]bool)})
+	if err != nil {
+		t.Fatalf("create renderer: %v", err)
+	}
+
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.Header.Set("HX-Boosted", "true")
+	response := httptest.NewRecorder()
+	handler.Home(renderer).ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d: %s", response.Code, http.StatusOK, response.Body.String())
+	}
+	if got := response.Body.String(); !strings.Contains(got, "<title>GoTH Template</title>") || !strings.Contains(got, "content") {
+		t.Errorf("body = %q", got)
+	}
+}
+
+type singleOpenFS struct {
+	fs.FS
+	opened map[string]bool
+}
+
+func (source *singleOpenFS) Open(name string) (fs.File, error) {
+	if source.opened[name] {
+		return nil, errors.New("template source opened more than once")
+	}
+	source.opened[name] = true
+	return source.FS.Open(name)
+}
+
+func (source *singleOpenFS) Stat(name string) (fs.FileInfo, error) {
+	return fs.Stat(source.FS, name)
 }
 
 func TestHomePreservesExistingVaryHeaders(t *testing.T) {
