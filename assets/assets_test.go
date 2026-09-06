@@ -17,8 +17,8 @@ func TestEmbeddedAssets(t *testing.T) {
 		want string
 	}{
 		{path: "css/app.css", want: "prefers-reduced-motion"},
-		{path: "js/app.js", want: `{ code: "422", swap: true, error: true }`},
-		{path: "js/htmx.min.js", want: "var htmx="},
+		{path: "js/app.js", want: `htmx.config.noSwap`},
+		{path: "js/htmx.min.js", want: "4.0.0"},
 		{path: "js/htmx.LICENSE", want: "Zero-Clause BSD"},
 	}
 

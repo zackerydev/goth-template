@@ -64,41 +64,15 @@ func NewDevelopmentFS(source fs.FS) (*Renderer, error) {
 
 // Render executes the named page or standalone partial into writer.
 func (r *Renderer) Render(writer io.Writer, name string, data any) error {
-	return r.RenderDefinitions(writer, name, []string{name}, data)
-}
-
-// RenderDefinition executes a named definition from a page or standalone partial.
-func (r *Renderer) RenderDefinition(writer io.Writer, page, definition string, data any) error {
-	return r.RenderDefinitions(writer, page, []string{definition}, data)
-}
-
-// RenderDefinitions executes named definitions from one parsed page or partial set.
-func (r *Renderer) RenderDefinitions(writer io.Writer, page string, definitions []string, data any) error {
 	if r == nil {
 		return errors.New("template renderer is nil")
 	}
-	if len(definitions) == 0 {
-		return errors.New("template definitions are empty")
-	}
-	for _, definition := range definitions {
-		if !validTemplateName(definition) {
-			return fmt.Errorf("invalid template definition %q", definition)
-		}
-	}
-
-	parsed, err := r.template(page)
+	parsed, err := r.template(name)
 	if err != nil {
 		return err
 	}
-	for _, definition := range definitions {
-		if parsed.Lookup(definition) == nil {
-			return fmt.Errorf("template definition %q not found in page %q", definition, page)
-		}
-	}
-	for _, definition := range definitions {
-		if err := parsed.ExecuteTemplate(writer, definition, data); err != nil {
-			return fmt.Errorf("render template %q: %w", definition, err)
-		}
+	if err := parsed.ExecuteTemplate(writer, name, data); err != nil {
+		return fmt.Errorf("render template %q: %w", name, err)
 	}
 	return nil
 }

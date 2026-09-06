@@ -30,7 +30,7 @@ func TestRoutes(t *testing.T) {
 		{name: "home", path: "/", wantStatus: http.StatusOK, wantType: "text/html", wantBody: "Start building."},
 		{name: "greeting", path: "/greeting", wantStatus: http.StatusOK, wantType: "text/html", wantBody: "HTMX is connected."},
 		{name: "stylesheet", path: "/assets/css/app.css", wantStatus: http.StatusOK, wantType: "text/css"},
-		{name: "not found", path: "/missing", wantStatus: http.StatusNotFound, wantType: "application/json"},
+		{name: "not found", path: "/missing", wantStatus: http.StatusNotFound, wantType: "text/plain"},
 	}
 
 	for _, test := range tests {

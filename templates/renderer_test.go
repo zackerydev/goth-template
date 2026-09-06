@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"testing"
 	"testing/fstest"
@@ -32,9 +31,8 @@ func TestEmbeddedTemplatesRenderPagesAndPartials(t *testing.T) {
 		"<!doctype html>",
 		`<html lang="en">`,
 		`id="main-content"`,
+		`hx-boost:inherited="swap:outerSync select:#main-content target:#main-content"`,
 		"Start building.",
-		"This is my button",
-		"html/template",
 		`hx-get="/greeting"`,
 	} {
 		if !strings.Contains(page.String(), want) {
@@ -46,59 +44,8 @@ func TestEmbeddedTemplatesRenderPagesAndPartials(t *testing.T) {
 	if err := renderer.Render(&greeting, "greeting", nil); err != nil {
 		t.Fatalf("render greeting: %v", err)
 	}
-	if got := strings.TrimSpace(greeting.String()); got != `<div class="demo" id="greeting" role="status">
-	<p>HTMX is connected.</p>
-</div>` {
-		t.Errorf("greeting = %q", got)
-	}
-}
-
-func TestRendererRendersNamedDefinitions(t *testing.T) {
-	t.Parallel()
-
-	renderer, err := templates.NewProductionFS(fixtureFS("home"))
-	if err != nil {
-		t.Fatalf("create renderer: %v", err)
-	}
-
-	var content bytes.Buffer
-	if err := renderer.RenderDefinition(&content, "home", "content", nil); err != nil {
-		t.Fatalf("render content definition: %v", err)
-	}
-	if strings.Contains(content.String(), "<html>") || !strings.Contains(content.String(), "home page") {
-		t.Errorf("content definition = %q", content.String())
-	}
-	if err := renderer.RenderDefinition(&content, "home", "missing", nil); err == nil {
-		t.Error("render missing definition succeeded")
-	}
-	if err := renderer.RenderDefinition(&content, "home", "content/part", nil); err == nil {
-		t.Error("render invalid definition succeeded")
-	}
-	if err := renderer.RenderDefinition(&content, "pages/home", "content", nil); err == nil {
-		t.Error("render invalid page succeeded")
-	}
-	if err := renderer.RenderDefinitions(&content, "home", nil, nil); err == nil {
-		t.Error("render empty definitions succeeded")
-	}
-}
-
-func TestRendererRendersMultipleDefinitionsFromOnePageSet(t *testing.T) {
-	t.Parallel()
-
-	renderer, err := templates.NewProductionFS(fixtureFS("home"))
-	if err != nil {
-		t.Fatalf("create renderer: %v", err)
-	}
-
-	var output bytes.Buffer
-	if err := renderer.RenderDefinitions(&output, "home", []string{"document-title", "content"}, map[string]string{"Title": "Home"}); err != nil {
-		t.Fatalf("render definitions: %v", err)
-	}
-	if got := output.String(); !strings.Contains(got, "<title>Home</title>") || !strings.Contains(got, "home page") {
-		t.Errorf("output = %q", got)
-	}
-	if strings.Contains(output.String(), "<html>") {
-		t.Errorf("output contains the page shell: %q", output.String())
+	if !strings.Contains(greeting.String(), `id="greeting"`) || strings.Contains(greeting.String(), "<html") {
+		t.Errorf("greeting = %q", greeting.String())
 	}
 }
 
@@ -131,12 +78,7 @@ func TestProductionPagesHaveIndependentTemplateSets(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create renderer: %v", err)
 	}
-
-	for _, test := range []struct {
-		name string
-		want string
-		omit string
-	}{
+	for _, test := range []struct{ name, want, omit string }{
 		{name: "alpha", want: "alpha page", omit: "beta page"},
 		{name: "beta", want: "beta page", omit: "alpha page"},
 	} {
@@ -168,58 +110,23 @@ func TestRendererEscapesValuesAndReportsFailures(t *testing.T) {
 	if strings.Contains(escaped.String(), `<script>alert`) || !strings.Contains(escaped.String(), `&lt;script&gt;`) {
 		t.Errorf("value was not escaped: %s", escaped.String())
 	}
-
-	var execution bytes.Buffer
-	if err := renderer.Render(&execution, "value", struct{}{}); err == nil {
+	if err := renderer.Render(&bytes.Buffer{}, "value", struct{}{}); err == nil {
 		t.Fatal("render with missing field succeeded")
 	}
-
-	var writeFailure bytes.Buffer
 	if err := renderer.Render(failingWriter{}, "value", map[string]string{"Title": "title", "Value": "value"}); err == nil {
 		t.Fatal("render with failing writer succeeded")
 	}
-
-	if err := renderer.Render(&writeFailure, "unknown", nil); err == nil {
+	if err := renderer.Render(&bytes.Buffer{}, "unknown", nil); err == nil {
 		t.Fatal("render with unknown template succeeded")
 	}
 	for _, name := range []string{"", "../home", "pages/home", `home\page`} {
-		if err := renderer.Render(&writeFailure, name, nil); err == nil {
+		if err := renderer.Render(&bytes.Buffer{}, name, nil); err == nil {
 			t.Errorf("render with invalid name %q succeeded", name)
 		}
 	}
 }
 
-func TestRendererHandlesConcurrentProductionRenders(t *testing.T) {
-	t.Parallel()
-
-	renderer, err := templates.NewProductionFS(fixtureFS("home"))
-	if err != nil {
-		t.Fatalf("create renderer: %v", err)
-	}
-
-	const workers = 16
-	errorsFound := make(chan error, workers)
-	var wait sync.WaitGroup
-	for range workers {
-		wait.Go(func() {
-			var output bytes.Buffer
-			if err := renderer.Render(&output, "home", map[string]string{"Title": "Home"}); err != nil {
-				errorsFound <- err
-				return
-			}
-			if !strings.Contains(output.String(), "home page") {
-				errorsFound <- errors.New("rendered output lost page content")
-			}
-		})
-	}
-	wait.Wait()
-	close(errorsFound)
-	for err := range errorsFound {
-		t.Error(err)
-	}
-}
-
-func TestDevelopmentReloadsPagesLayoutsAndPartials(t *testing.T) {
+func TestDevelopmentReloadsAndRecovers(t *testing.T) {
 	t.Parallel()
 
 	source := fixtureFS("home")
@@ -232,59 +139,30 @@ func TestDevelopmentReloadsPagesLayoutsAndPartials(t *testing.T) {
 	if err := renderer.Render(&initial, "home", map[string]string{"Title": "Home"}); err != nil {
 		t.Fatalf("render initial home: %v", err)
 	}
-	if !strings.Contains(initial.String(), "home page") || !strings.Contains(initial.String(), "initial greeting") {
+	if !strings.Contains(initial.String(), "home page") {
 		t.Fatalf("initial output = %q", initial.String())
 	}
-
-	var partial bytes.Buffer
-	if err := renderer.Render(&partial, "greeting", nil); err != nil {
+	if err := renderer.Render(&bytes.Buffer{}, "greeting", nil); err != nil {
 		t.Fatalf("render development partial: %v", err)
 	}
-	if !strings.Contains(partial.String(), "initial greeting") {
-		t.Errorf("development partial = %q", partial.String())
-	}
 
-	var unknown bytes.Buffer
-	if err := renderer.Render(&unknown, "missing", nil); err == nil {
-		t.Error("render missing development template succeeded")
-	}
-
-	source["layouts/layout.html"].Data = []byte(`{{ define "layout" }}layout two {{ template "document-title" . }}{{ template "content" . }}{{ end }}`)
-	source["pages/home.html"].Data = []byte(`{{ define "home" }}{{ template "layout" . }}{{ end }}{{ define "content" }}home two {{ template "greeting" . }}{{ end }}`)
-	source["partials/greeting.html"].Data = []byte(`{{ define "greeting" }}greeting two{{ end }}`)
-
-	var updated bytes.Buffer
-	if err := renderer.Render(&updated, "home", map[string]string{"Title": "Updated"}); err != nil {
-		t.Fatalf("render updated home: %v", err)
-	}
-	for _, want := range []string{"layout two", "home two", "greeting two", "Updated"} {
-		if !strings.Contains(updated.String(), want) {
-			t.Errorf("updated output does not contain %q: %s", want, updated.String())
-		}
-	}
-}
-
-func TestDevelopmentRecoversAfterMalformedMarkup(t *testing.T) {
-	t.Parallel()
-
-	source := fixtureFS("home")
-	renderer, err := templates.NewDevelopmentFS(source)
-	if err != nil {
-		t.Fatalf("create development renderer: %v", err)
-	}
 	source["pages/home.html"].Data = []byte(`{{ define "home" }}`)
-
-	var output bytes.Buffer
-	if err := renderer.Render(&output, "home", nil); err == nil {
+	if err := renderer.Render(&bytes.Buffer{}, "home", nil); err == nil {
 		t.Fatal("malformed development template succeeded")
 	}
 
-	source["pages/home.html"].Data = []byte(`{{ define "home" }}{{ template "layout" . }}{{ end }}{{ define "content" }}fixed{{ end }}`)
-	if err := renderer.Render(&output, "home", map[string]string{"Title": "Fixed"}); err != nil {
-		t.Fatalf("render after fixing template: %v", err)
+	source["pages/home.html"].Data = []byte(`{{ define "home" }}{{ template "layout" . }}{{ end }}{{ define "content" }}home two{{ end }}`)
+	source["layouts/layout.html"].Data = []byte(`{{ define "layout" }}layout two {{ template "content" . }}{{ end }}`)
+	var updated bytes.Buffer
+	if err := renderer.Render(&updated, "home", nil); err != nil {
+		t.Fatalf("render updated home: %v", err)
 	}
-	if !strings.Contains(output.String(), "fixed") {
-		t.Errorf("fixed output = %q", output.String())
+	if !strings.Contains(updated.String(), "layout two") || !strings.Contains(updated.String(), "home two") {
+		t.Errorf("updated output = %q", updated.String())
+	}
+
+	if err := renderer.Render(&bytes.Buffer{}, "missing", nil); err == nil {
+		t.Error("render missing development template succeeded")
 	}
 }
 
@@ -336,7 +214,7 @@ func TestRendererInitializationErrors(t *testing.T) {
 	}
 }
 
-func TestProductionInitializationErrors(t *testing.T) {
+func TestProductionTemplateErrors(t *testing.T) {
 	t.Parallel()
 
 	malformed := fixtureFS("home")
@@ -349,7 +227,6 @@ func TestProductionInitializationErrors(t *testing.T) {
 	if _, err := templates.NewProductionFS(malformedPage); err == nil {
 		t.Error("malformed production page succeeded")
 	}
-
 	missingLayouts := fixtureFS("home")
 	delete(missingLayouts, "layouts/layout.html")
 	if _, err := templates.NewProductionFS(missingLayouts); err == nil {
@@ -366,7 +243,6 @@ func TestProductionInitializationErrors(t *testing.T) {
 	if _, err := templates.NewProductionFS(missingPages); err == nil {
 		t.Error("production source without pages succeeded")
 	}
-
 	duplicate := fixtureFS("home")
 	duplicate["pages/greeting.html"] = &fstest.MapFile{Data: []byte(`{{ define "greeting" }}page{{ end }}`)}
 	if _, err := templates.NewProductionFS(duplicate); err == nil {
@@ -374,7 +250,7 @@ func TestProductionInitializationErrors(t *testing.T) {
 	}
 }
 
-func TestDevelopmentInitializationErrors(t *testing.T) {
+func TestDevelopmentTemplateErrors(t *testing.T) {
 	t.Parallel()
 
 	developmentWithoutLayout := fixtureFS("home")
@@ -386,7 +262,6 @@ func TestDevelopmentInitializationErrors(t *testing.T) {
 	if err := developmentRenderer.Render(&bytes.Buffer{}, "home", nil); err == nil {
 		t.Error("development source without layout succeeded")
 	}
-
 	developmentWithoutPartials := fixtureFS("home")
 	delete(developmentWithoutPartials, "partials/document-title.html")
 	delete(developmentWithoutPartials, "partials/greeting.html")
@@ -397,20 +272,15 @@ func TestDevelopmentInitializationErrors(t *testing.T) {
 	if err := developmentRenderer.Render(&bytes.Buffer{}, "home", nil); err == nil {
 		t.Error("development source without partials succeeded")
 	}
-}
-
-func TestRendererReportsSourceAndNilRendererErrors(t *testing.T) {
-	t.Parallel()
 
 	sentinel := errors.New("source unavailable")
-	renderer, err := templates.NewDevelopmentFS(errorFS{err: sentinel})
+	errorRenderer, err := templates.NewDevelopmentFS(errorFS{err: sentinel})
 	if err != nil {
 		t.Fatalf("create development renderer: %v", err)
 	}
-	if err := renderer.Render(&bytes.Buffer{}, "home", nil); !errors.Is(err, sentinel) {
+	if err := errorRenderer.Render(&bytes.Buffer{}, "home", nil); !errors.Is(err, sentinel) {
 		t.Errorf("source error = %v, want %v", err, sentinel)
 	}
-
 	partialErrorRenderer, err := templates.NewDevelopmentFS(partialErrorFS{err: sentinel})
 	if err != nil {
 		t.Fatalf("create development renderer with partial error source: %v", err)

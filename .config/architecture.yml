@@ -8,11 +8,6 @@ exclude:
   - .worktrees
 excludeFiles:
   - "^.*_test\\.go$"
-vendors:
-  echo:
-    in:
-      - github.com/labstack/echo/v5
-      - github.com/labstack/echo/v5/**
 components:
   cmd:
     in: cmd/*
@@ -34,8 +29,6 @@ deps:
     mayDependOn:
       - handler
       - assets
-    canUse:
-      - echo
   handler:
     mayDependOn:
       - templates

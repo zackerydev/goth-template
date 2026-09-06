@@ -13,6 +13,7 @@ rumdl = "rumdl"
 
 [files]
 extend-exclude = [
+  ".agents/**",
   "bin/**",
   "tmp/**",
   "vendor/**",

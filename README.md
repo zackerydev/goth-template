@@ -1,139 +1,141 @@
 # GoTH Template
 
-A minimal base application built with Go, Echo,
-[html/template](https://pkg.go.dev/html/template), and
-[HTMX](https://htmx.org/).
+Base for a Go + html/template + [htmx 4](https://four.htmx.org/) app. Stdlib
+only: `net/http`, `html/template`, `embed`. Vendored htmx. No Node, no codegen,
+no Go module dependencies.
 
-## Use this template
+This file is the contract for agents building on the template. Follow it. Do
+not re-litigate the stack.
 
-Create a repository from this template, clone it, then replace the module path:
+## Do not introduce
 
-```sh
-old='github.com/zackerydev/goth-template'
-new='github.com/you/your-app'
-grep -RIl --exclude-dir=.git "$old" . | xargs sed -i '' "s|$old|$new|g"
-```
+- Routers or frameworks (Echo, Chi, Gin, Fiber)
+- HTML codegen (`templ`, gomponents) or a JS bundler
+- Runtime CDNs for htmx, CSS, or JS
+- ORMs, sqlx, pgx, Postgres, Goose
+- Implicit htmx inheritance (`htmx.config.implicitInheritance`)
+- A boosted-request render path (always return the full page for navigation)
+- New Go dependencies unless the feature cannot be done in the standard library
 
-On Linux, omit the empty argument after `sed -i`. Rename `cmd/app` and the
-`build` task's output if the executable needs a product-specific name.
+Load `.agents/skills/htmx-guidance` when writing or changing HTML/htmx.
+Load `.agents/skills/htmx-debugging` when a request or swap misbehaves.
 
-## Prerequisites
+## First steps
 
-Install [mise](https://mise.jdx.dev/). The repository pins Go, Air, and all
-quality tools.
+1. Replace the module path and rename `cmd/app` if needed. Linux: drop the
+   `''` after `sed -i`.
 
-## Setup
+   ```sh
+   old='github.com/zackerydev/goth-template'
+   new='github.com/you/your-app'
+   grep -RIl --exclude-dir=.git "$old" . | xargs sed -i '' "s|$old|$new|g"
+   ```
 
-```sh
-mise run setup
-```
+2. `mise run setup` (pins Go/tools, installs Lefthook).
+3. `mise run dev` → <http://localhost:8888> (`APP_PORT`/`PORT` override;
+   worktrees get a derived port).
+4. Delete the demo fragment when you start real work: `GET /greeting`,
+   `handler.Greeting`, `templates/partials/greeting.html`, and tests that
+   mention it.
 
-Production templates are embedded in the binary. No template generation step is
-needed.
+Air restarts on Go changes. `--dev` reparses HTML from disk per request;
+refresh the browser. Embedded CSS/JS need a restart. `mise run run` is
+production (embedded templates).
 
-## Development
+## Add a page
 
-```sh
-mise run dev
-```
+Three edits. Templates do not register routes.
 
-The application runs at <http://localhost:8888>; linked Git worktrees receive
-stable derived application ports. Set `APP_PORT` or `PORT` to override the
-application port.
+1. `templates/pages/about.html` — named page + `content`. Do not copy the
+   document shell.
 
-Air rebuilds and restarts the Go application for Go changes only. In development
-(`--dev`), HTML templates are read from the current worktree and reparsed on
-each HTML request, so an HTML edit is visible on the next request without a
-browser reload proxy. Refresh the browser manually to request updated HTML.
-CSS and JavaScript are still embedded, so asset edits require a rebuild/restart.
-`mise run run` starts the embedded production renderer.
+   ```html
+   {{ define "about" }}{{ template "layout" . }}{{ end }}
 
-The home page includes one small fragment swap to prove the full stack is wired.
-Delete the `/greeting` route, handler, template, and tests when starting the
-first real feature.
+   {{ define "content" }}
+   <section aria-labelledby="about-title">
+     <h1 id="about-title">About</h1>
+   </section>
+   {{ end }}
+   ```
 
-## Templates
+2. Handler in `internal/handler`: buffer, `renderer.Render`, `PageData.Title`,
+   `text/html` on success, `500` + `"template rendering failed"` on parse/execute
+   errors. Copy `Home`.
+3. Construct the handler in `cmd/app`, register `GET /about` on the mux in
+   `internal/server`.
 
-Canonical pages live in `templates/pages`, shared document structure lives in
-`templates/layouts`, and standalone fragments live in `templates/partials`.
-Each page defines a named page that calls `layout`, plus a `content` definition:
+Link with a normal `<a href="/about">`. Boosting is inherited from `<body>`.
+
+## Add a fragment
+
+Put markup in `templates/partials/<name>.html` as `{{ define "<name>" }}`.
+Register a dedicated route. Return only the fragment (no layout). Target a
+stable id with `hx-get`/`hx-post` and an explicit `hx-target` / `hx-swap` on
+that control — those attributes are not inherited unless you add `:inherited`.
+
+## HTTP and htmx
+
+- Mux: `http.NewServeMux` in `internal/server`. Handlers are `http.Handler`.
+- Navigation pages: always `Render` the page name (full document).
+- Boost config lives on the layout body:
+
+  ```html
+  <body hx-boost:inherited="swap:outerSync select:#main-content target:#main-content">
+  ```
+
+  htmx 4 inheritance is explicit. Parent `hx-*` without `:inherited` does not
+  apply to children.
+- `assets/js/app.js`: `htmx.config.noSwap = [204, 304, "5xx"]`. `422` swaps
+  (validation). Do not restore htmx 2 `responseHandling`.
+- Forms: real `action`/`method`, server validation, PRG on success. htmx is
+  enhancement, not a client router.
+- Vendor htmx under `assets/js/`. Bump the file, license, and asset test
+  together.
+
+## Packages
 
 ```text
-templates/layouts/layout.html
-templates/pages/home.html
-templates/partials/document-title.html
-templates/partials/greeting.html
+cmd/app            process: flags, port, http.Server
+internal/server    mux, /assets/
+internal/handler   HTTP adapters
+assets             embed css/, js/
+templates          html/template renderer
+.config            mise, Lefthook, linters
+.agents/skills     htmx 4 skills
 ```
 
-A native request renders the named page and receives the complete document. An
-HTMX boosted request renders the document title and page content only; ordinary
-HTMX requests and history-restoration requests receive the complete document.
-The renderer uses `html/template` escaping, embeds and parses all production
-templates at startup, and reloads development templates per request.
+Dependency direction (enforced):
 
-To add a canonical page, create `templates/pages/about.html`:
-
-```html
-{{ define "about" }}{{ template "layout" . }}{{ end }}
-
-{{ define "content" }}
-<section aria-labelledby="about-title">
-  <h1 id="about-title">About</h1>
-</section>
-{{ end }}
+```text
+cmd/app → server → handler → templates
+               ↘ assets
 ```
 
-Add its HTTP handler following `internal/handler/home.go`: render `about` for a
-full document, or render `document-title` and `content` together with one
-`RenderDefinitions` call for boosted requests. Supply a `Title` field for the
-document title and retain buffering, history-restoration handling, and `Vary`
-headers. Wire the handler through `cmd/app` and register `/about` in
-`internal/server/routes.go`. Template files do not register routes automatically.
-
-The layout owns `<main>` and persistent navigation; page content must not repeat
-that shell. Link to `/about` with a normal anchor: inherited boosting handles
-navigation, and the link still works without JavaScript. See
-[ADR 0006](docs/adr/0006-html-template-rendering.md) for the rendering contract.
+Add `internal/service/<domain>` or `internal/model` only when a feature needs
+it, then declare the package in `.config/architecture.yml`. Do not put Echo or
+other HTTP libraries in `server`.
 
 ## Persistence
 
-The base app carries no placeholder schema, but the persistence decision is
-already made: SQLite through `database/sql`, typed queries generated by sqlc,
-and embedded migrations applied by golang-migrate. Do not introduce Goose,
-sqlx, pgx, PostgreSQL, or an ORM without requirements that justify a superseding
-ADR. See [ADR 0005](docs/adr/0005-sqlite-persistence-tooling.md). Future sqlc
-installation, generation, and verification tasks are introduced together with
-the first persistence feature; they are intentionally absent from this base.
+Skip until the first real schema. Then: SQLite, `database/sql`, sqlc,
+golang-migrate, all introduced together (mise tools, generate task, check).
 
-## Project layout
+## Tests
 
-```text
-cmd/app/             executable entry point and startup flags
-internal/server/     Echo composition and routes
-internal/handler/    HTTP response handlers
-assets/              embedded CSS, JavaScript, and HTMX
-templates/           embedded HTML pages, layouts, partials, and renderer
-.config/             tool and quality-gate policy
-docs/adr/            architectural decisions
-```
+`httptest` + status/body substrings. No HTML parsers, no browser driver, no
+Node. Cover the handler/mux behavior you added. Keep 100% coverage on eligible
+packages (`cmd/app` is excluded). Race + shuffle is already in `mise run test`.
 
-Keep domain packages demand-driven. Add `internal/service/<domain>` or
-`internal/model` only when an implemented feature needs them, then classify the
-new package in `.config/architecture.yml`.
+## Quality gates
 
-## Commands
+Commits are blocked until hooks pass. Do not `--no-verify`.
 
 ```sh
-mise run fix       # format and synchronize the repository
-mise run check     # run every read-only quality gate
-mise run test      # race-tested, shuffled tests with coverage
-mise run build     # build bin/app
-mise run run       # run the server in production mode
-mise run dev       # run Air with development template reloads
+mise run fix     # format, tidy — hook runs this and git add -A
+mise run check   # config, format, mod, arch, lint, prose, tests, coverage,
+                 # build, vulns, history secrets
 ```
 
-`mise run check` verifies configuration, formatting, module integrity, package
-architecture, static analysis, prose, tests, 100% coverage of eligible
-handwritten code, the build, vulnerabilities, and committed-history secrets.
-Lefthook runs `fix`, stages the result, and runs the same checks before normal
-commits.
+Commit types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore` (Conventional
+Commits). Lefthook also scans the staged diff with gitleaks.
