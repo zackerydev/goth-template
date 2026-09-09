@@ -1,20 +1,20 @@
 {{ define "layout" }}
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="/assets/css/app.css" />
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="stylesheet" href="/assets/css/app.css" />
     <script defer src="/assets/js/htmx.min.js"></script>
     <script defer src="/assets/js/app.js"></script>
-    {{ template "document-title" . }}
-  </head>
-  <body hx-boost:inherited="swap:outerSync select:#main-content target:#main-content">
-    <a class="skip-link" href="#main-content">Skip to main content</a>
-    <header class="site-header">
-      <a class="site-header__brand" href="/">GoTH Template</a>
-    </header>
-    <main id="main-content">{{ template "content" . }}</main>
-  </body>
+		{{ template "document-title" . }}
+	</head>
+	<body hx-boost:inherited="swap:outerSync select:#main-content target:#main-content">
+		<a class="skip-link" href="#main-content">Skip to main content</a>
+		<header class="site-header">
+			<a class="site-header__brand" href="/">GoTH Template</a>
+		</header>
+		<main id="main-content">{{ template "content" . }}</main>
+	</body>
 </html>
 {{ end }}

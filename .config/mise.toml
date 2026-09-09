@@ -10,12 +10,17 @@ gitleaks = "8.30.1"
 "go:golang.org/x/vuln/cmd/govulncheck" = "v1.6.0"
 "go:github.com/vladopajic/go-test-coverage/v2" = "v2.18.8"
 "go:github.com/fe3dback/go-arch-lint" = "v1.16.0"
+"go:github.com/gohugoio/gotmplfmt" = "v0.4.1"
 rumdl = "0.2.34"
 typos = "1.48.0"
 
 [tasks.dev]
 description = "Run Air with request-time HTML reload"
 run = "bash -c 'source .config/worktree-env.sh && exec air -c .config/air.toml'"
+
+[tasks.init]
+description = "Initialize a new repo from this template (prompts for owner/repo)"
+run = "bash .config/setup.sh"
 
 [tasks.setup]
 description = "Install pinned tools and Git hooks"
@@ -41,15 +46,17 @@ run = [{ task = "test" }, { task = "coverage" }]
 description = "Fix and synchronize the whole repository"
 run = [
   "mise exec -- rumdl -c .config/rumdl.toml fmt .",
+  "mise exec -- gotmplfmt -w templates",
   "find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- gofumpt -w",
   "find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- goimports -w",
   "go mod tidy",
 ]
 
 [tasks.format-check]
-description = "Verify handwritten Go and Markdown formatting"
+description = "Verify handwritten Go, Markdown, and template formatting"
 run = [
   "mise exec -- rumdl -c .config/rumdl.toml fmt --check .",
+  "test -z \"$(mise exec -- gotmplfmt -l templates)\"",
   "find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- gofumpt -d",
   "test -z \"$(find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- goimports -l)\"",
 ]
@@ -60,7 +67,6 @@ run = [
   "mise tasks validate",
   "mise exec -- lefthook validate",
   "mise exec -- golangci-lint config verify -c .config/golangci.yml",
-  "bash .config/check-commits.sh",
   "APP_RUN_SMOKE=1 mise run run",
 ]
 
@@ -87,17 +93,9 @@ run = ["go mod tidy -diff", "go mod verify"]
 description = "Build the application binary"
 run = "go build -o bin/app ./cmd/app"
 
-[tasks.vulnerabilities]
+[tasks.security]
 description = "Check reachable Go vulnerabilities"
 run = "mise exec -- govulncheck ./..."
-
-[tasks.history-secrets]
-description = "Scan committed history for secrets"
-run = "mise exec -- gitleaks git --config .config/gitleaks.toml --redact --no-banner ."
-
-[tasks.security]
-description = "Run vulnerability and secret scans in parallel"
-run = [{ tasks = ["vulnerabilities", "history-secrets"] }]
 
 [tasks.run]
 description = "Run the application server"

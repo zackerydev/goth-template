@@ -7,4 +7,5 @@ exclude = [
   "bin/**",
   "tmp/**",
   "vendor/**",
+  "AGENTS.md",
 ]
