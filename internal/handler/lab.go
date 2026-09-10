@@ -59,7 +59,7 @@ func (lab *Lab) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	lab.mu.Lock()
 	defer lab.mu.Unlock()
 	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("Vary", "HX-Request")
+	w.Header().Set("Vary", "HX-Request, HX-Request-Type, HX-History-Restore-Request")
 	if r.Method == http.MethodPost {
 		lab.mutate(w, r)
 		return

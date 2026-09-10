@@ -17,6 +17,8 @@ pre-commit:
             run: git diff --cached --binary --no-color | mise exec -- gitleaks detect --config .config/gitleaks.toml --pipe --redact --no-banner
           - name: repository checks
             run: mise run check
+          - name: browser and visual regression
+            run: npx --no-install playwright test
 
 commit-msg:
   jobs:

@@ -55,7 +55,7 @@ func TestLabDocumentAndFragments(t *testing.T) {
 	if strings.Contains(response.Body.String(), "<!doctype html>") || !strings.Contains(response.Body.String(), "Complete selected") {
 		t.Fatal("enhanced list navigation must return only the workspace")
 	}
-	if response.Header().Get("Vary") != "HX-Request" || response.Header().Get("Cache-Control") != "no-store" {
+	if response.Header().Get("Vary") != "HX-Request, HX-Request-Type, HX-History-Restore-Request" || response.Header().Get("Cache-Control") != "no-store" {
 		t.Fatal("representations must not be mixed or cached")
 	}
 }
@@ -88,7 +88,7 @@ func TestLabEditValidationAndMultiRegionResponse(t *testing.T) {
 	t.Parallel()
 	client := newLabClient(t)
 	bad := client.request(t, http.MethodPost, "/lab/task?id=1", taskForm("x", "Done"))
-	if bad.Code != http.StatusUnprocessableEntity || !strings.Contains(bad.Body.String(), `value="x"`) || strings.Contains(bad.Body.String(), `id="workspace"`) {
+	if bad.Code != http.StatusUnprocessableEntity || !strings.Contains(bad.Body.String(), `>x</textarea>`) || strings.Contains(bad.Body.String(), `id="workspace"`) {
 		t.Fatalf("validation must return only editor and preserve draft: %d %s", bad.Code, bad.Body.String())
 	}
 	unchanged := client.request(t, http.MethodGet, "/lab?status=In+progress", nil)

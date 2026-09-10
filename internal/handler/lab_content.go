@@ -17,8 +17,8 @@ func seedTasks() []Task {
 func lessons() []Lesson {
 	return []Lesson{
 		{ID: "navigation", Name: "URL-driven navigation", Summary: "An application shell without a client router. Every view and task is a real URL. Direct visits get a document; htmx visits get the workspace.", Markup: `<a href="/lab?view=list" hx-get="/lab?view=list"
-   hx-target="#workspace" hx-swap="outerHTML transition:true"
-   hx-push-url="true">List view</a>`, Response: "GET /lab?view=list → 200 text/html\n\n<section id=\"workspace\">…list view…</section>\n\nWithout HX-Request: true, return the complete document.\nVary: HX-Request prevents mixing the two representations.", Try: "Switch Board → List. Open a task. Copy the URL into a new tab, then use Back."},
+   hx-target="#workspace" hx-swap="outerHTML"
+   hx-push-url="true">List view</a>`, Response: "GET /lab?view=list → 200 text/html\n\n<main id=\"workspace\">…list view…</main>\n\nWithout HX-Request: true, return the complete document.\nVary includes HX-Request, HX-Request-Type, and\nHX-History-Restore-Request; this sandbox also sends no-store.", Try: "Switch Board → List. Open a task. Copy the URL into a new tab, then use Back."},
 		{ID: "search", Name: "Live search + request sync", Summary: "Debounce input, include the whole filter form, and replace older requests. Search state lives in the URL, not a client-side store.", Markup: `<input name="q" hx-get="/lab"
    hx-trigger="input changed delay:300ms"
    hx-include="closest form" hx-sync="closest form:replace"
@@ -28,8 +28,8 @@ func lessons() []Lesson {
    hx-post="/lab/task?id=1" hx-target="#workspace"
    hx-swap="outerHTML"
    hx-status:422="target:#editor swap:outerHTML"
-   hx-disable="find button">…</form>`, Response: "POST /lab/task?id=1 → 422 text/html\n\n<aside id=\"editor\">\n  <p role=\"alert\">Give this task a title…</p>\n  <form>…your submitted values…</form>\n</aside>\n\nValid submission → 200 workspace + notification partial.", Try: "Open a card, enter a one-character title, and save. Then fix it and change the workflow status."},
-		{ID: "partials", Name: "One response, multiple regions", Summary: "Update the board and announce the result in the same round trip. Explicit htmx 4 partials keep distant regions in sync without a global state store.", Markup: `<section id="workspace">…updated cards and counts…</section>
+   hx-disable="find button">…</form>`, Response: "POST /lab/task?id=1 → 422 text/html\n\n<dialog open id=\"editor\">\n  <p role=\"alert\">Give this task a title…</p>\n  <form>…your submitted values…</form>\n</dialog>\n\nValid submission → 200 workspace + notification partial.", Try: "Open a card, enter a one-character title, and save. Then fix it and change the workflow status."},
+		{ID: "partials", Name: "One response, multiple regions", Summary: "Update the board and announce the result in the same round trip. Explicit htmx 4 partials keep distant regions in sync without a global state store.", Markup: `<main id="workspace">…updated cards and counts…</main>
 <hx-partial hx-target="#notice" hx-swap="innerHTML">
   Saved: Ship keyboard-friendly navigation
 </hx-partial>`, Response: "POST /lab/task?id=4 → 200 text/html\nHX-Replace-Url: /lab?view=board\n\nMain swap: #workspace\nAdditional partial: #notice (persistent live region)\nCounts derive from the same server state as the cards.", Try: "Move a task to Done using its detail panel. Watch the card, metrics, URL, and bottom notification update together."},
@@ -48,7 +48,7 @@ func lessons() []Lesson {
    hx-target="this" hx-swap="outerHTML">
   Load older activity
 </button>`, Response: "GET /lab/events?offset=5 → 200 text/html\n\n<div class=\"event\">…older event…</div>\n<div class=\"event\">…older event…</div>\n<button hx-get=\"/lab/events?offset=10\" …>Load older</button>\n\nThe button replaces itself with items + the next button.", Try: "Make six or more edits, then open Activity and load older entries. Existing entries stay untouched."},
-		{ID: "platform", Name: "The platform is the framework", Summary: "Native links, forms, details, focus styles, and HTTP redirects provide the foundation. htmx enhances the transport. A little JavaScript powers observation, not application state.", Markup: `<form method="post" action="/lab/reset"
+		{ID: "platform", Name: "The platform is the framework", Summary: "Native links, forms, details, focus styles, and HTTP redirects provide the foundation. htmx enhances the transport. A little JavaScript manages dialog focus, selection feedback, and observation—not application state.", Markup: `<form method="post" action="/lab/reset"
    hx-post="/lab/reset" hx-target="#workspace"
    hx-swap="outerHTML" hx-confirm="Reset the shared sandbox?">
   <button>Reset sandbox</button>

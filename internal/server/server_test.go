@@ -28,7 +28,7 @@ func TestRoutes(t *testing.T) {
 		wantBody   string
 	}{
 		{name: "home", path: "/", wantStatus: http.StatusOK, wantType: "text/html", wantBody: "Start building."},
-		{name: "lab", path: "/lab", wantStatus: http.StatusOK, wantType: "text/html", wantBody: "HTML has"},
+		{name: "lab", path: "/lab", wantStatus: http.StatusOK, wantType: "text/html", wantBody: "Studio workspace"},
 		{name: "lab component", path: "/lab/pulse", wantStatus: http.StatusOK, wantType: "text/html", wantBody: "id=\"pulse\""},
 		{name: "greeting", path: "/greeting", wantStatus: http.StatusOK, wantType: "text/html", wantBody: "HTMX is connected."},
 		{name: "stylesheet", path: "/assets/css/app.css", wantStatus: http.StatusOK, wantType: "text/css"},

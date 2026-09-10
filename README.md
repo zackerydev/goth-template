@@ -1,6 +1,6 @@
 # Hypermedia Lab
 
-**HTML has range.** A hands-on htmx 4 learning site built on the GoTH template.
+A hands-on htmx 4 learning site built on the GoTH template.
 
 A studio workspace with a board, searchable list, deep-linked task editor, activity feed,
 and a simulated release preview. The interface is rendered with Go's `html/template`.
@@ -44,7 +44,8 @@ Use `APP_PORT=8889 mise run dev` to choose a port explicitly.
 - `internal/handler/lab_content.go`: initial tasks and pattern explanations.
 - `templates/pages/lab.html`: document, workspace, editor, activity, and partial templates.
 - `assets/css/lab.css`: responsive visual design, reduced-motion support, and focus styles.
-- `assets/js/lab.js`: observation and request-failure feedback only. No application state.
+- `assets/js/lab.js`: native dialog focus, selection feedback, HTTP inspection, and errors.
+  No client-side task model.
 - `internal/server/server.go`: routes and embedded assets.
 
 Full page requests return a document. Enhanced navigation returns the workspace.
@@ -56,7 +57,7 @@ This is a **shared, in-memory demo**, not an authenticated application. All visi
 process see the same data. A mutex serializes access, forms are limited to 16 KiB, and Go's
 cross-origin protection rejects cross-site mutations. Activity retains the latest 100
 entries. Restarting the server or using Reset sandbox restores the initial data.
-Google Fonts is optional; system fonts are the fallback. Everything else is served locally.
+System fonts and locally served assets keep the interface independent of third-party requests.
 
 The examples cover core hypermedia interaction patterns, not every htmx attribute or
 extension. SSE, uploads, drag-and-drop, and authentication are intentionally outside this
@@ -69,3 +70,62 @@ analysis, race-tested Go tests, 100% eligible-code coverage, security checks, an
 Behavioral tests cover representation negotiation, filtering, edits and escaping, validation,
 ordinary forms, bulk actions, pagination, polling completion, and request boundaries.
 The polling lifecycle test deliberately takes ten seconds to exercise the real server clock.
+
+### htmx skill alignment
+
+The implementation follows `.agents/skills/htmx-guidance` and `htmx-debugging`:
+
+- Explicit `:inherited` targeting, swaps, history, and shared loading feedback.
+- Explicit GET form inclusion; debounced search uses `hx-sync` to cancel obsolete requests.
+- `outerMorph` preserves search input; replacement swaps reset saved forms and selections.
+- HTTP 422 returns editor HTML through `hx-status:422`; transport failures preserve drafts.
+- `<hx-partial>` updates the notification alongside the authoritative workspace.
+- Full documents for direct/history requests, fragments for targeted requests, and 303 after
+  ordinary POSTs. `Vary` lists all representation headers; the demo is not cached.
+- Native links, forms, dialog behavior, and htmx 4 colon-separated lifecycle events.
+- Paired markup and response contracts in every walkthrough; no client-side task model.
+
+The extension-authoring and upgrade skills were also reviewed. This example neither authors
+an extension nor migrates htmx 2, so no compatibility layer or extension API is needed.
+Behavioral browser tests exercise these contracts rather than asserting source-code spellings.
+
+### Browser and visual regression
+
+The pre-commit hook also runs Playwright against a **separate server on port 19169**.
+It never resets the development server's sandbox. Node and Playwright are test-only;
+the application still has no frontend build step. `mise run setup` installs both the
+locked npm dependencies and Chromium.
+
+The browser suite covers desktop (1440 × 1000) and mobile (390 × 844):
+
+- Board, list, native editor sheet, pattern library, and activity screenshots.
+- Inline validation, empty search, request inspector, and scrolled board screenshots.
+- Search focus, combined filters, clearing, bulk feedback, and real response inspection.
+- Stable board geometry, modal keyboard containment, Escape, and restored focus.
+- Back/Forward, direct links, reloads, no-JavaScript forms, and horizontal overflow.
+- Last-card visibility when the inspector is expanded.
+- Inherited loading indicators, request cancellation, disabled submit buttons, and recovery
+  from failed saves or tasks deleted by another visitor.
+
+Run validation through the hooks, with changes staged:
+
+```bash
+git add -A
+mise exec -- lefthook run pre-commit
+```
+
+Missing or changed snapshots fail by default. To intentionally refresh baselines:
+
+```bash
+UPDATE_VISUALS=1 mise exec -- lefthook run pre-commit
+```
+
+**Review the generated images before staging them**, then rerun the hook without
+`UPDATE_VISUALS` to verify the comparison. Baselines live in
+`tests/browser/snapshots/<platform>/`; the checked-in reference is macOS Chromium.
+Different operating systems need their own reviewed baselines because system fonts differ.
+Only event clock prefixes and request timings are normalized or masked, not whole panels.
+
+Failures write expected/actual/diff images, traces, and an HTML report under
+`tmp/browser-results/` and `tmp/browser-report/`. A snapshot is a regression guard,
+not proof of good UX: review the actual screens and interaction assertions together.

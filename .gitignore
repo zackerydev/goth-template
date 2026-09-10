@@ -1,6 +1,9 @@
 # Build and test output
 /bin/
 /tmp/
+/node_modules/
+/test-results/
+/playwright-report/
 *.test
 coverage.out
 *.prof
