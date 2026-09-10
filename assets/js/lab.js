@@ -3,6 +3,14 @@
 // 422 remains swappable: its HTML is the validation interface, not a transport error.
 htmx.config.noSwap = [204, 304, 400, 403, 404, 405, 413, '5xx'];
 
+// htmx uses the browser's View Transition API; CSS owns the animation.
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+function configureMotion() {
+  htmx.config.transitions = !reducedMotion.matches;
+}
+configureMotion();
+reducedMotion.addEventListener('change', configureMotion);
+
 const starts = new WeakMap();
 const initializedDialogs = new WeakSet();
 let requestCount = 0;
@@ -65,6 +73,8 @@ document.addEventListener('htmx:before:request', event => {
   if (ctx.sourceElement.matches('.task-card, td a, #new-task')) returnFocusID = ctx.sourceElement.id;
 });
 
+// Set up the native dialog inside the swap, before the browser captures its new frame.
+document.addEventListener('htmx:after:settle', initializeUI);
 document.addEventListener('htmx:after:swap', initializeUI);
 document.addEventListener('change', updateSelection);
 

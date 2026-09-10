@@ -16,18 +16,18 @@ func seedTasks() []Task {
 
 func lessons() []Lesson {
 	return []Lesson{
-		{ID: "navigation", Name: "URL-driven navigation", Summary: "An application shell without a client router. Every view and task is a real URL. Direct visits get a document; htmx visits get the workspace.", Markup: `<a href="/lab?view=list" hx-get="/lab?view=list"
+		{ID: "navigation", Name: "URL-driven navigation", Summary: "An application shell without a client router. Every view and task is a real URL. Direct visits get a document; htmx visits get the workspace. Native CSS view transitions connect the old and new HTML without a client router.", Markup: `<a href="/lab?view=list" hx-get="/lab?view=list"
    hx-target="#workspace" hx-swap="outerHTML"
    hx-push-url="true">List view</a>`, Response: "GET /lab?view=list → 200 text/html\n\n<main id=\"workspace\">…list view…</main>\n\nWithout HX-Request: true, return the complete document.\nVary includes HX-Request, HX-Request-Type, and\nHX-History-Restore-Request; this sandbox also sends no-store.", Try: "Switch Board → List. Open a task. Copy the URL into a new tab, then use Back."},
 		{ID: "search", Name: "Live search + request sync", Summary: "Debounce input, include the whole filter form, and replace older requests. Search state lives in the URL, not a client-side store.", Markup: `<input name="q" hx-get="/lab"
    hx-trigger="input changed delay:300ms"
    hx-include="closest form" hx-sync="closest form:replace"
-   hx-target="#workspace" hx-swap="outerMorph"
+   hx-target="#workspace" hx-swap="outerMorph transition:false"
    hx-replace-url="true" />`, Response: "GET /lab?q=design&view=board → 200 text/html\n\nThe server filters tasks and returns the workspace.\nouterMorph keeps the focused search input and caret in place.\nReplace history for keystrokes; push history for navigation.", Try: "Type ‘design’ into the workspace search. Combine it with a status filter. Clear both to recover all cards."},
 		{ID: "validation", Name: "Editing + server validation", Summary: "A deep-linked detail panel is just another representation of the workspace. Invalid forms return 422 HTML, keeping the draft and explaining the error.", Markup: `<form method="post" action="/lab/task?id=1"
    hx-post="/lab/task?id=1" hx-target="#workspace"
    hx-swap="outerHTML"
-   hx-status:422="target:#editor swap:outerHTML"
+   hx-status:422="target:#editor swap:outerHTML transition:false"
    hx-disable="find button">…</form>`, Response: "POST /lab/task?id=1 → 422 text/html\n\n<dialog open id=\"editor\">\n  <p role=\"alert\">Give this task a title…</p>\n  <form>…your submitted values…</form>\n</dialog>\n\nValid submission → 200 workspace + notification partial.", Try: "Open a card, enter a one-character title, and save. Then fix it and change the workflow status."},
 		{ID: "partials", Name: "One response, multiple regions", Summary: "Update the board and announce the result in the same round trip. Explicit htmx 4 partials keep distant regions in sync without a global state store.", Markup: `<main id="workspace">…updated cards and counts…</main>
 <hx-partial hx-target="#notice" hx-swap="innerHTML">
@@ -41,11 +41,11 @@ func lessons() []Lesson {
   <button>Complete selected</button>
 </form>`, Response: "POST /lab/bulk?view=list\nContent-Type: application/x-www-form-urlencoded\n\ntask=1&task=2\n\n→ 200 workspace + notification partial\nNo JavaScript data model, reducer, or optimistic rollback.", Try: "Open List view. Select two tasks and complete them together. Try submitting an empty selection too."},
 		{ID: "polling", Name: "A self-stopping live job", Summary: "The server decides whether polling continues by including—or omitting—the trigger in its next response. This demo measures a ten-second preview with a server clock; it does not deploy anything.", Markup: `<section id="pulse" hx-get="/lab/pulse"
-   hx-trigger="every 1s" hx-swap="outerHTML">
+   hx-trigger="every 1s" hx-swap="outerHTML transition:false">
   <progress value="40" max="100">40%</progress>
 </section>`, Response: "GET /lab/pulse → 200 text/html\n\nWhile running: return #pulse with hx-trigger=\"every 1s\".\nAt 100%: return #pulse without polling attributes.\nThe loop ends because the new HTML says it should.", Try: "Open Activity and run a preview. Watch progress and the wire inspector. Requests stop at 100%."},
 		{ID: "pagination", Name: "Append without rebuilding", Summary: "Older activity arrives as HTML plus its own continuation control. The server owns pagination, including the point where there is no next page.", Markup: `<button hx-get="/lab/events?offset=5"
-   hx-target="this" hx-swap="outerHTML">
+   hx-target="this" hx-swap="outerHTML transition:false">
   Load older activity
 </button>`, Response: "GET /lab/events?offset=5 → 200 text/html\n\n<div class=\"event\">…older event…</div>\n<div class=\"event\">…older event…</div>\n<button hx-get=\"/lab/events?offset=10\" …>Load older</button>\n\nThe button replaces itself with items + the next button.", Try: "Make six or more edits, then open Activity and load older entries. Existing entries stay untouched."},
 		{ID: "platform", Name: "The platform is the framework", Summary: "Native links, forms, details, focus styles, and HTTP redirects provide the foundation. htmx enhances the transport. A little JavaScript manages dialog focus, selection feedback, and observation—not application state.", Markup: `<form method="post" action="/lab/reset"

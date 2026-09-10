@@ -317,6 +317,48 @@ body:has(.wire[open]) .notice { bottom: min(380px, 55dvh); }
   #wire-count { font-size: 11px; }
 }
 
+/* Stable names let the browser match server-rendered elements across swaps. */
+.appbar { view-transition-name: appbar; }
+.view-content { view-transition-name: content; }
+.task-card, td a { view-transition-class: task; }
+.editor { view-transition-name: editor; }
+.wire { view-transition-name: wire; }
+.notice { view-transition-name: notice; }
+
+::view-transition { pointer-events: none; }
+::view-transition-group(*) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+}
+::view-transition-old(root),
+::view-transition-new(root),
+::view-transition-old(appbar),
+::view-transition-new(appbar),
+::view-transition-old(wire),
+::view-transition-new(wire) { animation: none; }
+::view-transition-old(root), ::view-transition-old(appbar), ::view-transition-old(wire) { opacity: 0; }
+::view-transition-old(content) { animation: content-out 120ms ease-out both; }
+::view-transition-new(content) { animation: content-in 180ms ease-out both; }
+::view-transition-group(.task) { z-index: 1; }
+::view-transition-group(editor) { z-index: 10; }
+::view-transition-new(editor):only-child { animation: sheet-in 300ms cubic-bezier(.22, 1, .36, 1) both; }
+::view-transition-old(editor):only-child { animation: sheet-out 220ms ease-in both; }
+::view-transition-new(notice):only-child { animation: notice-in 200ms ease-out both; }
+
+@keyframes content-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes content-out { to { opacity: 0; } }
+@keyframes sheet-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes sheet-out { to { transform: translateX(100%); } }
+@keyframes notice-in { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+@media (max-width: 480px) {
+  ::view-transition-new(editor):only-child { animation-name: mobile-sheet-in; }
+  ::view-transition-old(editor):only-child { animation-name: mobile-sheet-out; }
+}
+@keyframes mobile-sheet-in { from { transform: translateY(12%); } to { transform: translateY(0); } }
+@keyframes mobile-sheet-out { to { transform: translateY(12%); } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }

@@ -66,16 +66,16 @@
 					<a href="/lab?view=board&amp;q={{ .Query }}&amp;status={{ .Status }}" hx-get="/lab?view=board&amp;q={{ .Query | urlquery }}&amp;status={{ .Status | urlquery }}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true" {{ if eq .View "board" }}aria-current="page"{{ end }}>Board</a>
 					<a href="/lab?view=list&amp;q={{ .Query }}&amp;status={{ .Status }}" hx-get="/lab?view=list&amp;q={{ .Query | urlquery }}&amp;status={{ .Status | urlquery }}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true" {{ if eq .View "list" }}aria-current="page"{{ end }}>List</a>
 				</nav>
-				<form action="/lab" method="get" class="filters" id="filters" hx-get="/lab" hx-include="this" hx-sync="this:replace" hx-target="#workspace" hx-swap="outerMorph" hx-replace-url="true" hx-indicator="#loading">
+				<form action="/lab" method="get" class="filters" id="filters" hx-get="/lab" hx-include="this" hx-sync="this:replace" hx-target="#workspace" hx-swap="outerMorph transition:false" hx-replace-url="true" hx-indicator="#loading">
 					<input type="hidden" name="view" value="{{ .View }}" />
-					<label class="search"><span class="sr-only">Search tasks</span><input id="search" type="search" name="q" value="{{ .Query }}" placeholder="Search tasks…" hx-get="/lab" hx-trigger="input changed delay:300ms" hx-include="closest form" hx-sync="closest form:replace" hx-target="#workspace" hx-swap="outerMorph" hx-replace-url="true" hx-indicator="#loading" /></label>
-					<select id="status-filter" name="status" aria-label="Filter by status" hx-get="/lab" hx-include="closest form" hx-sync="closest form:replace" hx-target="#workspace" hx-swap="outerMorph" hx-replace-url="true">
+					<label class="search"><span class="sr-only">Search tasks</span><input id="search" type="search" name="q" value="{{ .Query }}" placeholder="Search tasks…" hx-get="/lab" hx-trigger="input changed delay:300ms" hx-include="closest form" hx-sync="closest form:replace" hx-target="#workspace" hx-swap="outerMorph transition:false" hx-replace-url="true" hx-indicator="#loading" /></label>
+					<select id="status-filter" name="status" aria-label="Filter by status" hx-get="/lab" hx-include="closest form" hx-sync="closest form:replace" hx-target="#workspace" hx-swap="outerMorph transition:false" hx-replace-url="true">
 						<option value="">All statuses</option><option {{ if eq .Status "Backlog" }}selected{{ end }}>Backlog</option><option {{ if eq .Status "In progress" }}selected{{ end }}>In progress</option><option {{ if eq .Status "Done" }}selected{{ end }}>Done</option>
 					</select>
 					<button class="button" type="submit">Search</button>
 				</form>
 			</div>
-			{{ if or .Query .Status }}<div class="filter-summary"><span>{{ len .Tasks }} matching tasks</span><a class="text-link" href="/lab?view={{ .View }}" hx-get="/lab?view={{ .View }}" hx-target="#workspace" hx-swap="outerHTML" hx-replace-url="true">Clear filters</a></div>{{ end }}
+			{{ if or .Query .Status }}<div class="filter-summary"><span>{{ len .Tasks }} matching tasks</span><a class="text-link" href="/lab?view={{ .View }}" hx-get="/lab?view={{ .View }}" hx-target="#workspace" hx-swap="outerHTML transition:false" hx-replace-url="true">Clear filters</a></div>{{ end }}
 			<div class="task-area">{{ if eq .View "list" }}{{ template "task-list" . }}{{ else }}{{ template "board" . }}{{ end }}</div>
 			<p class="workspace-footnote">Changes are shared and reset on restart. <span id="loading" class="htmx-indicator">Receiving HTML…</span></p>
 		{{ end }}
@@ -91,7 +91,7 @@
 			<header class="column-heading"><h2><span class="status-dot {{ if eq .Name "Done" }}green{{ else if eq .Name "In progress" }}purple{{ end }}"></span>{{ .Name }} <span class="column-count">{{ len .Tasks }}</span></h2></header>
 			<div class="cards">
 				{{ range .Tasks }}
-					<a id="task-{{ .ID }}" class="task-card" href="/lab?view={{ $.View }}&amp;q={{ $.Query }}&amp;status={{ $.Status }}&amp;id={{ .ID }}" hx-get="/lab?view={{ $.View }}&amp;q={{ $.Query | urlquery }}&amp;status={{ $.Status | urlquery }}&amp;id={{ .ID }}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true">
+					<a id="task-{{ .ID }}" class="task-card" style="view-transition-name: task-{{ .ID }}" href="/lab?view={{ $.View }}&amp;q={{ $.Query }}&amp;status={{ $.Status }}&amp;id={{ .ID }}" hx-get="/lab?view={{ $.View }}&amp;q={{ $.Query | urlquery }}&amp;status={{ $.Status | urlquery }}&amp;id={{ .ID }}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true">
 						<div class="card-top"><span class="category">{{ .Category }}</span><span class="task-id">HL–{{ .ID }}</span></div>
 						<h3>{{ .Title }}</h3>
 						<div class="card-bottom"><span class="priority {{ .Priority }}">{{ .Priority }} priority</span><span class="card-arrow" aria-hidden="true">↗</span></div>
@@ -113,7 +113,7 @@
 			<thead><tr><th class="check-cell"><span class="sr-only">Select</span></th><th>Task</th><th>Status</th><th>Priority</th></tr></thead>
 			<tbody>
 				{{ range .Tasks }}
-					<tr><td class="check-cell"><label class="check-label"><input type="checkbox" name="task" value="{{ .ID }}" aria-label="Select {{ .Title }}" /></label></td><td><a id="task-{{ .ID }}" href="/lab?view=list&amp;q={{ $.Query }}&amp;status={{ $.Status }}&amp;id={{ .ID }}" hx-get="/lab?view=list&amp;q={{ $.Query | urlquery }}&amp;status={{ $.Status | urlquery }}&amp;id={{ .ID }}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true"><span class="task-id">HL–{{ .ID }}</span>{{ .Title }}</a></td><td class="status-cell"><span class="table-status">{{ .Status }}</span></td><td><span class="priority {{ .Priority }}">{{ .Priority }}</span></td></tr>
+					<tr><td class="check-cell"><label class="check-label"><input type="checkbox" name="task" value="{{ .ID }}" aria-label="Select {{ .Title }}" /></label></td><td><a id="task-{{ .ID }}" style="view-transition-name: task-{{ .ID }}" href="/lab?view=list&amp;q={{ $.Query }}&amp;status={{ $.Status }}&amp;id={{ .ID }}" hx-get="/lab?view=list&amp;q={{ $.Query | urlquery }}&amp;status={{ $.Status | urlquery }}&amp;id={{ .ID }}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true"><span class="task-id">HL–{{ .ID }}</span>{{ .Title }}</a></td><td class="status-cell"><span class="table-status">{{ .Status }}</span></td><td><span class="priority {{ .Priority }}">{{ .Priority }}</span></td></tr>
 				{{ else }}<tr><td colspan="4" class="empty-column">Nothing matches. Try a broader search.</td></tr>
 				{{ end }}
 			</tbody>
@@ -130,7 +130,7 @@
 	</header>
 	<div class="editor-body">
 		{{ if .Error }}<p id="task-error" class="error" role="alert">{{ .Error }}</p>{{ end }}
-		<form id="task-form" method="post" action="/lab/task?id={{ .Selected.ID }}&amp;view={{ .View }}&amp;q={{ .Query }}&amp;status={{ .Status }}" hx-post="/lab/task?id={{ .Selected.ID }}&amp;view={{ .View }}&amp;q={{ .Query | urlquery }}&amp;status={{ .Status | urlquery }}" hx-target="#workspace" hx-swap="outerHTML" hx-status:422="target:#editor swap:outerHTML" hx-disable="find button" hx-indicator="#editor-loading">
+		<form id="task-form" method="post" action="/lab/task?id={{ .Selected.ID }}&amp;view={{ .View }}&amp;q={{ .Query }}&amp;status={{ .Status }}" hx-post="/lab/task?id={{ .Selected.ID }}&amp;view={{ .View }}&amp;q={{ .Query | urlquery }}&amp;status={{ .Status | urlquery }}" hx-target="#workspace" hx-swap="outerHTML" hx-status:422="target:#editor swap:outerHTML transition:false" hx-disable="find button" hx-indicator="#editor-loading">
 			<label for="task-title">Title</label><textarea id="task-title" name="title" rows="2" maxlength="100" required autofocus {{ if .Error }}aria-describedby="task-error"{{ end }}>{{ .Selected.Title }}</textarea>
 			<div class="field-row">
 				<div><label for="task-status">Status</label><select id="task-status" name="status"><option {{ if eq .Selected.Status "Backlog" }}selected{{ end }}>Backlog</option><option {{ if eq .Selected.Status "In progress" }}selected{{ end }}>In progress</option><option {{ if eq .Selected.Status "Done" }}selected{{ end }}>Done</option></select></div>
@@ -167,7 +167,7 @@
 {{ end }}
 
 {{ define "pulse" }}
-<section id="pulse" class="pulse" {{ if .Running }}hx-get="/lab/pulse" hx-trigger="every 1s" hx-swap="outerHTML"{{ end }} aria-label="Preview build progress">
+<section id="pulse" class="pulse" {{ if .Running }}hx-get="/lab/pulse" hx-trigger="every 1s" hx-swap="outerHTML transition:false"{{ end }} aria-label="Preview build progress">
 	<div class="build-meta"><span class="eyebrow">STUDIO / PREVIEW</span><span class="build-percent">{{ .Progress }}<small>%</small></span></div>
 	<h3>{{ if .Running }}Bringing it together…{{ else if eq .Progress 100 }}Preview ready.{{ else }}Ready when you are.{{ end }}</h3>
 	<progress aria-label="Build completion" value="{{ .Progress }}" max="100">{{ .Progress }}%</progress>
@@ -178,5 +178,5 @@
 
 {{ define "events" }}
 {{ range .Events }}<div class="event"><span class="event-dot"></span><p>{{ . }}</p></div>{{ else }}<p class="muted">No activity yet. Make your first move.</p>{{ end }}
-{{ if .Next }}<button type="button" class="button load-more" hx-get="/lab/events?offset={{ .Next }}" hx-target="this" hx-swap="outerHTML" hx-disable="this">Load older activity ↓</button>{{ end }}
+{{ if .Next }}<button type="button" class="button load-more" hx-get="/lab/events?offset={{ .Next }}" hx-target="this" hx-swap="outerHTML transition:false" hx-disable="this">Load older activity ↓</button>{{ end }}
 {{ end }}

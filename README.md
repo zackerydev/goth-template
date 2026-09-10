@@ -89,6 +89,22 @@ The extension-authoring and upgrade skills were also reviewed. This example neit
 an extension nor migrates htmx 2, so no compatibility layer or extension API is needed.
 Behavioral browser tests exercise these contracts rather than asserting source-code spellings.
 
+### Native view transitions
+
+htmx's `transitions` config delegates swaps to `document.startViewTransition()`.
+CSS does the animation; there is no animation library or manual position tracking.
+
+- Stable `view-transition-name` values match task IDs across Board/List and status changes.
+- Workspace content crossfades; the header and inspector stay visually anchored.
+- The native editor sheet slides from the right on desktop and rises slightly on mobile.
+- Search, filter resets, validation, and polling use `transition:false` to avoid distraction.
+- Reduced-motion preferences disable transitions, including changes while the page is open.
+- Browsers without the API keep ordinary htmx swaps and native dialog behavior.
+
+The editor initializes on `htmx:after:settle`, inside the swap, so the browser captures
+its modal state before animating. The normal `htmx:after:swap` callback still handles
+final UI synchronization. No application data is owned by these callbacks.
+
 ### Browser and visual regression
 
 The pre-commit hook also runs Playwright against a **separate server on port 19169**.
@@ -125,6 +141,10 @@ UPDATE_VISUALS=1 mise exec -- lefthook run pre-commit
 `tests/browser/snapshots/<platform>/`; the checked-in reference is macOS Chromium.
 Different operating systems need their own reviewed baselines because system fonts differ.
 Only event clock prefixes and request timings are normalized or masked, not whole panels.
+Static layout tests use reduced motion. Separate motion tests observe the real native API,
+reject failed captures, check shared task animations and editor entry/exit, and snapshot
+paused transition frames. They also cover quiet updates, live preference changes, and
+browsers without the API.
 
 Failures write expected/actual/diff images, traces, and an HTML report under
 `tmp/browser-results/` and `tmp/browser-report/`. A snapshot is a regression guard,
