@@ -15,10 +15,10 @@ func TestNewApplication(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create production application: %v", err)
 	}
-	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request := httptest.NewRequest(http.MethodGet, "/lab", nil)
 	response := httptest.NewRecorder()
 	application.ServeHTTP(response, request)
-	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "Start building.") {
+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "HTML has") {
 		t.Fatalf("application response = %d %q", response.Code, response.Body.String())
 	}
 }

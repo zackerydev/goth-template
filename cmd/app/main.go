@@ -58,7 +58,7 @@ func newApplicationWithTemplateDirectory(development bool, directory string) (ht
 	if err != nil {
 		return nil, err
 	}
-	return server.New(handler.Home(renderer), handler.Greeting(renderer)), nil
+	return server.New(http.RedirectHandler("/lab", http.StatusSeeOther), handler.Greeting(renderer), handler.NewLab(renderer)), nil
 }
 
 func applicationPort() (int, error) {

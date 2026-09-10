@@ -18,7 +18,7 @@ func TestRoutes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create renderer: %v", err)
 	}
-	application := server.New(handler.Home(renderer), handler.Greeting(renderer))
+	application := server.New(handler.Home(renderer), handler.Greeting(renderer), handler.NewLab(renderer))
 
 	tests := []struct {
 		name       string
@@ -28,6 +28,8 @@ func TestRoutes(t *testing.T) {
 		wantBody   string
 	}{
 		{name: "home", path: "/", wantStatus: http.StatusOK, wantType: "text/html", wantBody: "Start building."},
+		{name: "lab", path: "/lab", wantStatus: http.StatusOK, wantType: "text/html", wantBody: "HTML has"},
+		{name: "lab component", path: "/lab/pulse", wantStatus: http.StatusOK, wantType: "text/html", wantBody: "id=\"pulse\""},
 		{name: "greeting", path: "/greeting", wantStatus: http.StatusOK, wantType: "text/html", wantBody: "HTMX is connected."},
 		{name: "stylesheet", path: "/assets/css/app.css", wantStatus: http.StatusOK, wantType: "text/css"},
 		{name: "not found", path: "/missing", wantStatus: http.StatusNotFound, wantType: "text/plain"},

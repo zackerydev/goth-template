@@ -1,0 +1,101 @@
+{{ define "lab" }}
+{{ if eq .Fragment "workspace" }}{{ template "workspace" . }}{{ if .Notice }}<hx-partial hx-target="#notice" hx-swap="innerHTML"><span class="notice-dot"></span>{{ .Notice }}</hx-partial>{{ end }}
+{{ else if eq .Fragment "editor" }}{{ template "editor" . }}
+{{ else if eq .Fragment "pulse" }}{{ template "pulse" . }}
+{{ else if eq .Fragment "events" }}{{ template "events" . }}
+{{ else }}
+	<!doctype html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8" />
+			<meta name="viewport" content="width=device-width, initial-scale=1" />
+			<title>{{ .Title }}</title>
+			<link rel="stylesheet" href="/assets/css/lab.css" />
+<script defer src="/assets/js/htmx.min.js"></script>
+<script defer src="/assets/js/lab.js"></script>
+		</head>
+		<body>
+			<a class="skip" href="#workspace">Skip to workspace</a>
+			<div class="shell">
+				<aside class="rail">
+					<a href="/lab" class="brand" aria-label="Hypermedia Lab home"><span class="brand-mark">h<span>↗</span></span><span>hypermedia<span class="brand-sub">LAB / EXPERIMENT 001</span></span></a>
+					<div class="rail-label">THE PLAYGROUND</div>
+					<nav aria-label="Main navigation" hx-target:inherited="#workspace" hx-swap:inherited="outerHTML transition:true" hx-push-url:inherited="true">
+						<a href="/lab?view=board" hx-get="/lab?view=board"><span>▦</span> Workspace <small>01</small></a>
+						<a href="/lab?view=patterns" hx-get="/lab?view=patterns"><span>⌘</span> Pattern library <small>02</small></a>
+						<a href="/lab?view=activity" hx-get="/lab?view=activity"><span>◴</span> Activity & jobs <small>03</small></a>
+					</nav>
+					<div class="rail-note"><span class="live-dot"></span> HTML over the wire<p>No client router.<br />No state store.<br />No sleight of hand.</p></div>
+					<div class="rail-bottom"><span class="stack-pill">Go</span><span class="stack-pill">htmx 4</span><p>Small stack. Big possibilities.</p><a href="https://htmx.org" target="_blank" rel="noreferrer">Meet htmx ↗</a></div>
+				</aside>
+				<div class="stage">
+					<header class="topbar"><div><span class="muted">Playground</span><span class="breadcrumb">/</span> Hypermedia Lab</div><div class="topbar-right"><span class="live-dot"></span> Interactive learning environment <span class="avatar">H↗</span></div></header>
+					<section class="hero">
+						<div><div class="eyebrow"><span></span> THE BROWSER CAN DO MORE THAN YOU THINK</div><h1>HTML has <em>range.</em></h1><p>Rich interactions. Real URLs. One beautifully boring architecture.<br />Explore an app that feels like a SPA—because hypermedia was always interactive.</p></div>
+						<div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="art-core">&lt;/&gt;</div><span class="art-label label-request">REQUEST ↗</span><span class="art-label label-response">↙ HTML</span><span class="art-spark">✳</span></div>
+					</section>
+					<div class="lesson-banner"><span class="banner-icon">↗</span><p><strong>Touch everything. Then look under the hood.</strong> Every interaction below is a real server round trip.</p><a href="#wire">Open the wire ↓</a></div>
+					<main>{{ template "workspace" . }}</main>
+					<footer class="statusbar"><div id="notice" role="status" aria-live="polite"><span class="notice-dot"></span>Shared sandbox · changes reset when the server restarts.</div><span id="loading" class="htmx-indicator">Receiving HTML…</span><span>SERVER RENDERED / HUMAN FRIENDLY</span></footer>
+					<details id="wire" class="wire"><summary><span><span class="live-dot"></span> THE WIRE <span class="wire-sub">A live look at the conversation</span></span><span id="wire-count">0 requests</span></summary><div class="wire-body"><div class="wire-heading"><p>Real requests. Real response HTML. Most recent first; last 12 kept locally.</p><button type="button" id="clear-wire" class="text-button">Clear log</button></div><div id="wire-log" aria-live="polite"><p class="wire-empty">Make a move above. The HTTP conversation will appear here.</p></div></div></details>
+				</div>
+			</div>
+		</body>
+	</html>
+{{ end }}
+{{ end }}
+
+{{ define "workspace" }}
+<section id="workspace" class="workspace" aria-label="Interactive workspace">
+	<div class="section-heading"><div><div class="eyebrow muted">{{ if eq .View "patterns" }}THE FIELD GUIDE{{ else if eq .View "activity" }}OBSERVE THE SYSTEM{{ else }}YOUR INTERACTIVE SANDBOX{{ end }}</div><h2>{{ if eq .View "patterns" }}Patterns, not magic.<span class="heading-dot">✳</span>{{ else if eq .View "activity" }}Work in motion.<span class="heading-dot">↗</span>{{ else }}Studio workspace<span class="project-tag">DEMO PROJECT</span>{{ end }}</h2><p class="section-subtitle">{{ if eq .View "patterns" }}Learn the mechanics. Inspect the markup. Try the real interaction.{{ else if eq .View "activity" }}Server-owned progress and a history of the changes you actually made.{{ else }}A tiny product team. A big launch. An interface made entirely of hypermedia.{{ end }}</p></div>
+		<div class="heading-actions">{{ if or (eq .View "board") (eq .View "list") }}<a class="button primary" href="/lab?view={{ .View }}&amp;id=-1" hx-get="/lab?view={{ .View }}&amp;id=-1" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true">＋ New task</a>{{ else }}<a class="button" href="/lab" hx-get="/lab" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true">← Workspace</a>{{ end }}</div></div>
+	{{ if eq .View "patterns" }}{{ template "patterns" . }}
+	{{ else if eq .View "activity" }}{{ template "activity" . }}
+	{{ else }}
+		<div class="metrics"><div><span class="metric-icon lavender">▦</span><span class="metric-value">{{ .Total }}<small>Total tasks</small></span><span class="metric-note">One source of truth</span></div><div><span class="metric-icon amber">◷</span><span class="metric-value">{{ .Active }}<small>In progress</small></span><span class="metric-note">Good things take shape</span></div><div><span class="metric-icon mint">✓</span><span class="metric-value">{{ .Done }}<small>Completed</small></span><span class="metric-note">A little closer to launch</span></div></div>
+		<div class="toolbar"><div class="view-switch" aria-label="Task view"><a class="{{ if eq .View "board" }}selected{{ end }}" href="/lab?view=board&amp;q={{ .Query }}&amp;status={{ .Status }}" hx-get="/lab?view=board&amp;q={{ .Query | urlquery }}&amp;status={{ .Status | urlquery }}" hx-target="#workspace" hx-swap="outerHTML transition:true" hx-push-url="true">▦ Board</a><a class="{{ if eq .View "list" }}selected{{ end }}" href="/lab?view=list&amp;q={{ .Query }}&amp;status={{ .Status }}" hx-get="/lab?view=list&amp;q={{ .Query | urlquery }}&amp;status={{ .Status | urlquery }}" hx-target="#workspace" hx-swap="outerHTML transition:true" hx-push-url="true">☰ List</a></div>
+			<form action="/lab" method="get" class="filters" id="filters" hx-get="/lab" hx-include="this" hx-sync="this:replace" hx-target="#workspace" hx-swap="outerMorph" hx-replace-url="true" hx-indicator="#loading"><input type="hidden" name="view" value="{{ .View }}" /><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" name="q" value="{{ .Query }}" placeholder="Search tasks…" aria-label="Search tasks" hx-get="/lab" hx-trigger="input changed delay:300ms" hx-include="closest form" hx-sync="closest form:replace" hx-target="#workspace" hx-swap="outerMorph" hx-replace-url="true" hx-indicator="#loading" /></label><select name="status" aria-label="Filter by status" hx-get="/lab" hx-include="closest form" hx-sync="closest form:replace" hx-target="#workspace" hx-swap="outerMorph" hx-replace-url="true"><option value="">All statuses</option><option {{ if eq .Status "Backlog" }}selected{{ end }}>Backlog</option><option {{ if eq .Status "In progress" }}selected{{ end }}>In progress</option><option {{ if eq .Status "Done" }}selected{{ end }}>Done</option></select><button class="button subtle" type="submit">Search</button></form></div>
+		<div class="work-area {{ if .Selected }}with-editor{{ end }}"><div class="task-area">{{ if eq .View "list" }}{{ template "task-list" . }}{{ else }}{{ template "board" . }}{{ end }}</div>{{ if .Selected }}{{ template "editor" . }}{{ end }}</div>
+		<div class="how-strip"><span class="code-icon">&lt;/&gt;</span><div><strong>This is HTML, not a client-side illusion.</strong><p>Try a search, open a card, change its status. The server returns exactly the HTML that changes.</p></div><a href="/lab?view=patterns" hx-get="/lab?view=patterns" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true">Explore the patterns ↗</a></div>
+	{{ end }}
+</section>
+{{ end }}
+
+{{ define "board" }}
+<div class="board">{{ range .Columns }}<section class="column"><header class="column-heading"><h3><span class="status-dot {{ if eq .Name "Done" }}green{{ else if eq .Name "In progress" }}purple{{ end }}"></span>{{ .Name }} <span>{{ len .Tasks }}</span></h3><span aria-hidden="true">···</span></header><div class="cards">{{ range .Tasks }}<a class="task-card" href="/lab?view={{ $.View }}&amp;q={{ $.Query }}&amp;status={{ $.Status }}&amp;id={{ .ID }}" hx-get="/lab?view={{ $.View }}&amp;q={{ $.Query | urlquery }}&amp;status={{ $.Status | urlquery }}&amp;id={{ .ID }}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true"><div class="card-top"><span class="category">{{ .Category }}</span><span class="task-id">HL–{{ .ID }}</span></div><h4>{{ .Title }}</h4><p>{{ .Notes }}</p><div class="card-bottom"><span class="priority {{ .Priority }}"><span>▰</span> {{ .Priority }}</span><span class="card-arrow" aria-label="Open task">↗</span></div></a>{{ else }}<div class="empty-column"><span>◇</span><p>Room for what's next.</p><small>No matching tasks here.</small></div>{{ end }}</div></section>{{ end }}</div>
+{{ end }}
+
+{{ define "task-list" }}
+<form class="list-form" method="post" action="/lab/bulk?view=list&amp;q={{ .Query }}&amp;status={{ .Status }}" hx-post="/lab/bulk?view=list&amp;q={{ .Query | urlquery }}&amp;status={{ .Status | urlquery }}" hx-target="#workspace" hx-swap="outerHTML" hx-disable="find button" hx-indicator="#loading"><div class="list-actions"><span>{{ len .Tasks }} matching tasks · select a few, act once</span><button class="button" type="submit">✓ Complete selected</button></div><div class="table-scroll"><table><thead><tr><th><span class="sr-only">Select</span></th><th>Task</th><th>Status</th><th>Priority</th></tr></thead><tbody>{{ range .Tasks }}<tr><td><input type="checkbox" name="task" value="{{ .ID }}" aria-label="Select {{ .Title }}" /></td><td><a href="/lab?view=list&amp;q={{ $.Query }}&amp;status={{ $.Status }}&amp;id={{ .ID }}" hx-get="/lab?view=list&amp;q={{ $.Query | urlquery }}&amp;status={{ $.Status | urlquery }}&amp;id={{ .ID }}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true"><span class="task-id">HL–{{ .ID }}</span>{{ .Title }}</a></td><td><span class="table-status">{{ .Status }}</span></td><td><span class="priority {{ .Priority }}">{{ .Priority }}</span></td></tr>{{ else }}<tr><td colspan="4" class="empty-column">Nothing matches. Try a broader search.</td></tr>{{ end }}</tbody></table></div></form>
+{{ end }}
+
+{{ define "editor" }}
+<aside id="editor" class="editor" aria-label="Task editor"><header><span class="eyebrow">{{ if eq .Selected.ID -1 }}A NEW POSSIBILITY{{ else }}TASK / HL–{{ .Selected.ID }}{{ end }}</span><a class="close" aria-label="Close task" href="/lab?view={{ .View }}&amp;q={{ .Query }}&amp;status={{ .Status }}" hx-get="/lab?view={{ .View }}&amp;q={{ .Query | urlquery }}&amp;status={{ .Status | urlquery }}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true">×</a></header><h3>{{ if eq .Selected.ID -1 }}Make room for an idea.{{ else }}The details matter.{{ end }}</h3><p class="editor-intro">A deep link. A server-rendered panel.<br />Not a client-side route in sight.</p>
+	{{ if .Error }}<p class="error" role="alert">{{ .Error }}</p>{{ end }}
+	<form method="post" action="/lab/task?id={{ .Selected.ID }}&amp;view={{ .View }}&amp;q={{ .Query }}&amp;status={{ .Status }}" hx-post="/lab/task?id={{ .Selected.ID }}&amp;view={{ .View }}&amp;q={{ .Query | urlquery }}&amp;status={{ .Status | urlquery }}" hx-target="#workspace" hx-swap="outerHTML" hx-status:422="target:#editor swap:outerHTML" hx-disable="find button" hx-indicator="#loading">
+		<label>Title<input name="title" value="{{ .Selected.Title }}" maxlength="100" required /></label>
+		<label>Status<select name="status"><option {{ if eq .Selected.Status "Backlog" }}selected{{ end }}>Backlog</option><option {{ if eq .Selected.Status "In progress" }}selected{{ end }}>In progress</option><option {{ if eq .Selected.Status "Done" }}selected{{ end }}>Done</option></select></label>
+		<label>Priority<select name="priority"><option {{ if eq .Selected.Priority "Low" }}selected{{ end }}>Low</option><option {{ if eq .Selected.Priority "Medium" }}selected{{ end }}>Medium</option><option {{ if eq .Selected.Priority "High" }}selected{{ end }}>High</option></select></label>
+		<label>Notes<textarea name="notes" rows="5" maxlength="2000">{{ .Selected.Notes }}</textarea></label>
+		<button class="button primary full" type="submit">{{ if eq .Selected.ID -1 }}Create task{{ else }}Save changes{{ end }} ↗</button></form>
+	{{ if ne .Selected.ID -1 }}<form class="delete-form" method="post" action="/lab/remove?id={{ .Selected.ID }}&amp;view={{ .View }}" hx-post="/lab/remove?id={{ .Selected.ID }}&amp;view={{ .View }}" hx-target="#workspace" hx-swap="outerHTML" hx-confirm="Delete this task from the shared sandbox?"><button class="text-button danger" type="submit">Delete task</button></form>{{ end }}
+	<details class="editor-tip"><summary>What happens on save?</summary><p>The form posts to Go. Invalid data returns 422 and replaces only this panel. Valid data returns the workspace plus a notification partial. Without JavaScript, a 303 redirect takes you back.</p></details>
+</aside>
+{{ end }}
+
+{{ define "patterns" }}
+<div class="pattern-layout"><nav class="pattern-nav" aria-label="Patterns">{{ range .Lessons }}<a class="{{ if eq .ID $.Lesson.ID }}active{{ end }}" href="/lab?view=patterns&amp;lesson={{ .ID }}" hx-get="/lab?view=patterns&amp;lesson={{ .ID }}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true"><span class="pattern-dot"></span>{{ .Name }}<span>↗</span></a>{{ end }}</nav><article class="lesson"><span class="pill">HTMX 4 / {{ .Lesson.ID }}</span><h3>{{ .Lesson.Name }}</h3><p class="lesson-summary">{{ .Lesson.Summary }}</p><div class="code-caption"><span>01 / THE MARKUP</span><span>HTML</span></div><pre><code>{{ .Lesson.Markup }}</code></pre><div class="code-caption"><span>02 / THE SERVER CONTRACT</span><span>HTTP → HTML</span></div><pre class="response-code"><code>{{ .Lesson.Response }}</code></pre><div class="try-box"><span>↗</span><div><strong>Your turn</strong><p>{{ .Lesson.Try }}</p><a href="/lab{{ if or (eq .Lesson.ID "polling") (eq .Lesson.ID "pagination") }}?view=activity{{ else if eq .Lesson.ID "bulk" }}?view=list{{ end }}" hx-get="/lab{{ if or (eq .Lesson.ID "polling") (eq .Lesson.ID "pagination") }}?view=activity{{ else if eq .Lesson.ID "bulk" }}?view=list{{ end }}" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true">Try it in the sandbox →</a></div></div></article></div>
+{{ end }}
+
+{{ define "activity" }}
+<div class="activity-layout"><div><div class="panel-title"><h3>Release preview</h3><span class="pill">CONDITIONAL POLLING</span></div>{{ template "pulse" . }}<div class="activity-note"><strong>The server is the state machine.</strong><p>Start a ten-second simulated build. Each tick returns a new progress component. At completion, the response omits the polling trigger. Nothing is actually deployed.</p><a href="/lab?view=patterns&amp;lesson=polling" hx-get="/lab?view=patterns&amp;lesson=polling" hx-target="#workspace" hx-swap="outerHTML" hx-push-url="true">Read the pattern ↗</a></div></div><section class="activity-feed"><div class="panel-title"><h3>What actually happened</h3><span class="live-dot"></span></div><p class="section-subtitle">Your shared sandbox history. Latest first.</p><div class="events">{{ template "events" . }}</div><form class="reset-form" action="/lab/reset?view=activity" method="post" hx-post="/lab/reset?view=activity" hx-target="#workspace" hx-swap="outerHTML" hx-confirm="Reset all shared tasks and activity?"><button type="submit" class="text-button">↺ Reset sandbox</button><span>Shared in memory · last 100 events</span></form></section></div>
+{{ end }}
+
+{{ define "pulse" }}
+<section id="pulse" class="pulse" {{ if .Running }}hx-get="/lab/pulse" hx-trigger="every 1s" hx-swap="outerHTML"{{ end }} aria-label="Preview build progress"><div class="build-art" aria-hidden="true">{{ if eq .Progress 100 }}✓{{ else }}✳{{ end }}</div><div class="build-meta"><span class="eyebrow">STUDIO / PREVIEW</span><span class="build-percent">{{ .Progress }}<small>%</small></span></div><h4>{{ if .Running }}Bringing it together…{{ else if eq .Progress 100 }}Ready for the world.{{ else }}Great work deserves a preview.{{ end }}</h4><progress value="{{ .Progress }}" max="100">{{ .Progress }}%</progress><div class="build-stages"><span>01 Prepare</span><span>02 Assemble</span><span>03 Ready</span></div>{{ if not .Running }}<form action="/lab/build?view=activity" method="post" hx-post="/lab/build?view=activity" hx-target="#workspace" hx-swap="outerHTML" hx-disable="find button"><button class="button primary" type="submit">{{ if eq .Progress 100 }}Run another preview{{ else }}Run preview{{ end }} ↗</button></form>{{ else }}<p class="poll-label"><span class="live-dot"></span> Fetching HTML every second · no background worker</p>{{ end }}</section>
+{{ end }}
+
+{{ define "events" }}
+{{ range .Events }}<div class="event"><span class="event-dot"></span><p>{{ . }}</p></div>{{ else }}<p class="muted">No activity yet. Make your first move.</p>{{ end }}
+{{ if .Next }}<button type="button" class="button load-more" hx-get="/lab/events?offset={{ .Next }}" hx-target="this" hx-swap="outerHTML" hx-disable="this">Load older activity ↓</button>{{ end }}
+{{ end }}
