@@ -73,6 +73,16 @@ document.addEventListener('htmx:before:request', event => {
   if (ctx.sourceElement.matches('.task-card, td a, #new-task')) returnFocusID = ctx.sourceElement.id;
 });
 
+// A modal backdrop must be captured with the whole background, not separate task/header layers.
+document.addEventListener('htmx:before:viewTransition', event => {
+  const action = new URL(event.detail.ctx.request.action, location.href);
+  const editorTransition = document.getElementById('editor') || action.searchParams.has('id');
+  document.documentElement.classList.toggle('editor-transition', Boolean(editorTransition));
+});
+document.addEventListener('htmx:after:viewTransition', () => {
+  document.documentElement.classList.remove('editor-transition');
+});
+
 // Set up the native dialog inside the swap, before the browser captures its new frame.
 document.addEventListener('htmx:after:settle', initializeUI);
 document.addEventListener('htmx:after:swap', initializeUI);

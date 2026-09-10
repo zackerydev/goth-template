@@ -337,8 +337,8 @@ body:has(.wire[open]) .notice { bottom: min(380px, 55dvh); }
 ::view-transition-old(wire),
 ::view-transition-new(wire) { animation: none; }
 ::view-transition-old(root), ::view-transition-old(appbar), ::view-transition-old(wire) { opacity: 0; }
-::view-transition-old(content) { animation: content-out 120ms ease-out both; }
-::view-transition-new(content) { animation: content-in 180ms ease-out both; }
+::view-transition-old(content) { animation: none; opacity: 1; mix-blend-mode: normal; }
+::view-transition-new(content) { animation: content-in 180ms ease-out both; mix-blend-mode: normal; }
 ::view-transition-group(.task) { z-index: 1; }
 ::view-transition-group(editor) { z-index: 10; }
 ::view-transition-new(editor):only-child { animation: sheet-in 300ms cubic-bezier(.22, 1, .36, 1) both; }
@@ -346,7 +346,12 @@ body:has(.wire[open]) .notice { bottom: min(380px, 55dvh); }
 ::view-transition-new(notice):only-child { animation: notice-in 200ms ease-out both; }
 
 @keyframes content-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes content-out { to { opacity: 0; } }
+/* Keep the old background opaque beneath the new one: no white frame between them. */
+html.editor-transition :is(.appbar, .view-content, .task-card, td a, .wire, .notice) {
+  view-transition-name: none !important;
+}
+html.editor-transition::view-transition-old(root) { animation: none; opacity: 1; mix-blend-mode: normal; }
+html.editor-transition::view-transition-new(root) { animation: content-in 220ms ease-out both; mix-blend-mode: normal; }
 @keyframes sheet-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
 @keyframes sheet-out { to { transform: translateX(100%); } }
 @keyframes notice-in { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

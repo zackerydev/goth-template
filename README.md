@@ -94,7 +94,9 @@ Behavioral browser tests exercise these contracts rather than asserting source-c
 htmx's `transitions` config delegates swaps to `document.startViewTransition()`.
 CSS does the animation; there is no animation library or manual position tracking.
 
-- Stable `view-transition-name` values match task IDs across Board/List and status changes.
+- Stable `view-transition-name` values match task IDs across Board/List changes.
+- Editor transactions capture the background as one layer, including the native backdrop.
+  Header and card snapshots must not fade independently under a modal.
 - Workspace content crossfades; the header and inspector stay visually anchored.
 - The native editor sheet slides from the right on desktop and rises slightly on mobile.
 - Search, filter resets, validation, and polling use `transition:false` to avoid distraction.
@@ -143,8 +145,11 @@ Different operating systems need their own reviewed baselines because system fon
 Only event clock prefixes and request timings are normalized or masked, not whole panels.
 Static layout tests use reduced motion. Separate motion tests observe the real native API,
 reject failed captures, check shared task animations and editor entry/exit, and snapshot
-paused transition frames. They also cover quiet updates, live preference changes, and
-browsers without the API.
+paused transition frames. A pixel-level desktop regression checks background brightness
+at the start, middle, and end of opening/closing, including the handoff back to the live page.
+This caught the modal-backdrop flash that a single midpoint snapshot missed. The full-width
+mobile sheet is covered by motion screenshots instead of the desktop background sample.
+Tests also cover quiet updates, live preference changes, and browsers without the API.
 
 Failures write expected/actual/diff images, traces, and an HTML report under
 `tmp/browser-results/` and `tmp/browser-report/`. A snapshot is a regression guard,

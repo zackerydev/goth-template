@@ -43,7 +43,8 @@ test('native shared elements and editor entry/exit animate without breaking focu
   await page.goto('/lab');
   await page.getByRole('navigation', { name: 'Task view' }).getByRole('link', { name: 'List' }).click();
   await finished(page, 1);
-  expect(await page.evaluate(() => window.motion.frames.flat().some(name => name.includes('task-1')))).toBe(true);
+  const move = await page.evaluate(() => window.motion.moves[0].find(animation => animation.name.includes('task-1')));
+  expect(move.transforms[0]).not.toBe(move.transforms.at(-1));
   await page.evaluate(() => { window.motion.hold = true; });
   await page.locator('#task-1').click();
   await expect.poll(() => page.evaluate(() => window.motion.paused)).toBe(true);
@@ -66,8 +67,8 @@ test('native shared elements and editor entry/exit animate without breaking focu
   await page.getByRole('button', { name: 'Save changes' }).click();
   await finished(page, 6);
   await expect(page.getByRole('region', { name: 'Done tasks' }).locator('#task-3')).toBeVisible();
-  const move = await page.evaluate(() => window.motion.moves.at(-1).find(animation => animation.name.includes('task-3')));
-  expect(move.transforms[0]).not.toBe(move.transforms.at(-1));
+  // Modal transactions use one background capture, not independently fading cards.
+  expect(await page.evaluate(() => window.motion.moves.at(-1))).toEqual([]);
 });
 
 test('live search, validation, and polling do not start transitions', async ({ page }) => {
@@ -109,6 +110,57 @@ test('reduced motion disables native transitions, including preference changes',
   await page.locator('#task-1').click();
   await expect(page.locator('#task-title')).toBeFocused();
   expect(await page.evaluate(() => window.motion.started)).toBe(1);
+});
+
+async function backgroundBrightness(page) {
+  const image = await page.screenshot({ clip: { x: 700, y: 16, width: 32, height: 32 }, animations: 'allow' });
+  return page.evaluate(async bytes => {
+    const bitmap = await createImageBitmap(new Blob([new Uint8Array(bytes)], { type: 'image/png' }));
+    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+    const context = canvas.getContext('2d');
+    context.drawImage(bitmap, 0, 0);
+    const pixels = context.getImageData(0, 0, bitmap.width, bitmap.height).data;
+    let sum = 0;
+    for (let i = 0; i < pixels.length; i += 4) sum += (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+    bitmap.close();
+    return sum / (pixels.length / 4);
+  }, [...image]);
+}
+
+test('editor backdrop does not flash between captured frames and the live page', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile', 'The full-width mobile sheet covers the background sample.');
+  await page.goto('/lab');
+  const before = await backgroundBrightness(page);
+  await page.evaluate(() => { window.motion.hold = true; });
+  await page.locator('#task-1').click();
+  await expect.poll(() => page.evaluate(() => window.motion.paused)).toBe(true);
+  const opening = [];
+  for (const time of [0, 60, 120, 200]) {
+    await page.evaluate(time => document.getAnimations().forEach(animation => { animation.currentTime = time; }), time);
+    opening.push(await backgroundBrightness(page));
+  }
+  await page.evaluate(() => document.getAnimations().forEach(animation => animation.finish()));
+  await finished(page, 1);
+  const settled = await backgroundBrightness(page);
+  expect(settled).toBeLessThan(before - 40);
+  for (let i = 1; i < opening.length; i++) expect(opening[i]).toBeLessThanOrEqual(opening[i - 1] + 2);
+  expect(Math.abs(opening[0] - before), 'No flash at the start of opening').toBeLessThan(3);
+  expect(Math.abs(opening.at(-1) - settled), 'No brightness jump when snapshots are removed').toBeLessThan(10);
+  await page.evaluate(() => { window.motion.hold = true; window.motion.paused = false; });
+  await page.keyboard.press('Escape');
+  await expect.poll(() => page.evaluate(() => window.motion.paused)).toBe(true);
+  const closing = [];
+  for (const time of [0, 60, 120, 200]) {
+    await page.evaluate(time => document.getAnimations().forEach(animation => { animation.currentTime = time; }), time);
+    closing.push(await backgroundBrightness(page));
+  }
+  await page.evaluate(() => document.getAnimations().forEach(animation => animation.finish()));
+  await finished(page, 2);
+  const restored = await backgroundBrightness(page);
+  for (let i = 1; i < closing.length; i++) expect(closing[i]).toBeGreaterThanOrEqual(closing[i - 1] - 2);
+  expect(Math.abs(closing[0] - settled), 'No flash at the start of closing').toBeLessThan(3);
+  expect(Math.abs(closing.at(-1) - restored), 'No flash at the end of closing').toBeLessThan(10);
+  expect(Math.abs(restored - before)).toBeLessThan(3);
 });
 
 test('browsers without the API still navigate and edit normally', async ({ page }) => {

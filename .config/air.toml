@@ -4,8 +4,8 @@ tmp_dir = "tmp"
 [build]
 cmd = "go build -o ./tmp/app ./cmd/app"
 entrypoint = ["./tmp/app", "--dev"]
-include_ext = ["go"]
-exclude_dir = ["tmp", ".git", ".worktrees"]
+include_ext = ["go", "css", "js"]
+exclude_dir = ["tmp", ".git", ".worktrees", "node_modules", "tests", "bin"]
 exclude_file = []
 exclude_regex = []
 delay = 1000
