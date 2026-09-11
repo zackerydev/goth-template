@@ -2,6 +2,8 @@
 // Tasks, validation, filters, history URLs, and job progress are server-owned.
 // 422 remains swappable: its HTML is the validation interface, not a transport error.
 htmx.config.noSwap = [204, 304, 400, 403, 404, 405, 413, '5xx'];
+// Initialize inserted dialogs in the same turn, before a non-modal frame can paint.
+htmx.config.defaultSettleDelay = 0;
 
 // htmx uses the browser's View Transition API; CSS owns the animation.
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -16,6 +18,7 @@ const initializedDialogs = new WeakSet();
 let requestCount = 0;
 let editorWasOpen = false;
 let returnFocusID;
+let returnScroll;
 
 function textElement(tag, className, text) {
   const element = document.createElement(tag);
@@ -28,10 +31,12 @@ function initializeUI() {
   const editor = document.getElementById('editor');
   if (editor && !initializedDialogs.has(editor)) {
     initializedDialogs.add(editor);
+    if (!editorWasOpen) editor.classList.add('entering');
     editorWasOpen = true;
     returnFocusID ??= editor.dataset.taskId === '-1' ? 'new-task' : `task-${editor.dataset.taskId}`;
     editor.removeAttribute('open');
     editor.showModal();
+    if (returnScroll) scrollTo(returnScroll);
     editor.addEventListener('cancel', event => {
       event.preventDefault();
       editor.querySelector('[data-close-editor]').click();
@@ -40,7 +45,9 @@ function initializeUI() {
   } else if (!editor && editorWasOpen) {
     editorWasOpen = false;
     (document.getElementById(returnFocusID) ?? document.getElementById('view-heading'))?.focus({ preventScroll: true });
+    if (returnScroll) scrollTo(returnScroll);
     returnFocusID = undefined;
+    returnScroll = undefined;
   }
   updateSelection();
 }
@@ -70,20 +77,13 @@ function showError(message) {
 document.addEventListener('htmx:before:request', event => {
   const ctx = event.detail.ctx;
   starts.set(ctx, performance.now());
-  if (ctx.sourceElement.matches('.task-card, td a, #new-task')) returnFocusID = ctx.sourceElement.id;
+  if (ctx.sourceElement.matches('.task-card, td a, #new-task')) {
+    returnFocusID = ctx.sourceElement.id;
+    returnScroll = { left: scrollX, top: scrollY };
+  }
 });
 
-// A modal backdrop must be captured with the whole background, not separate task/header layers.
-document.addEventListener('htmx:before:viewTransition', event => {
-  const action = new URL(event.detail.ctx.request.action, location.href);
-  const editorTransition = document.getElementById('editor') || action.searchParams.has('id');
-  document.documentElement.classList.toggle('editor-transition', Boolean(editorTransition));
-});
-document.addEventListener('htmx:after:viewTransition', () => {
-  document.documentElement.classList.remove('editor-transition');
-});
-
-// Set up the native dialog inside the swap, before the browser captures its new frame.
+// Set up the native dialog synchronously inside the swap.
 document.addEventListener('htmx:after:settle', initializeUI);
 document.addEventListener('htmx:after:swap', initializeUI);
 document.addEventListener('change', updateSelection);

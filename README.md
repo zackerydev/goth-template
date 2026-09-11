@@ -95,17 +95,18 @@ htmx's `transitions` config delegates swaps to `document.startViewTransition()`.
 CSS does the animation; there is no animation library or manual position tracking.
 
 - Stable `view-transition-name` values match task IDs across Board/List changes.
-- Editor transactions capture the background as one layer, including the native backdrop.
-  Header and card snapshots must not fade independently under a modal.
+- Editor links and forms explicitly use `transition:false`: selecting or saving a task
+  never captures, crossfades, or animates the page behind the modal.
 - Workspace content crossfades; the header and inspector stay visually anchored.
-- The native editor sheet slides from the right on desktop and rises slightly on mobile.
+- Only the live editor moves: a 140 ms, 12 px CSS entrance (8 px vertically on mobile).
+  Closing is immediate; validation does not replay the entrance. The backdrop stays still.
 - Search, filter resets, validation, and polling use `transition:false` to avoid distraction.
 - Reduced-motion preferences disable transitions, including changes while the page is open.
 - Browsers without the API keep ordinary htmx swaps and native dialog behavior.
 
-The editor initializes on `htmx:after:settle`, inside the swap, so the browser captures
-its modal state before animating. The normal `htmx:after:swap` callback still handles
-final UI synchronization. No application data is owned by these callbacks.
+The editor initializes on `htmx:after:settle`, with a zero settle delay, so there is no
+intermediate non-modal frame. The normal `htmx:after:swap` callback still handles final UI
+synchronization. No application data is owned by these callbacks.
 
 ### Browser and visual regression
 
@@ -144,12 +145,12 @@ UPDATE_VISUALS=1 mise exec -- lefthook run pre-commit
 Different operating systems need their own reviewed baselines because system fonts differ.
 Only event clock prefixes and request timings are normalized or masked, not whole panels.
 Static layout tests use reduced motion. Separate motion tests observe the real native API,
-reject failed captures, check shared task animations and editor entry/exit, and snapshot
-paused transition frames. A pixel-level desktop regression checks background brightness
-at the start, middle, and end of opening/closing, including the handoff back to the live page.
-This caught the modal-backdrop flash that a single midpoint snapshot missed. The full-width
-mobile sheet is covered by motion screenshots instead of the desktop background sample.
-Tests also cover quiet updates, live preference changes, and browsers without the API.
+reject failed captures, check shared task animations, and assert that editor actions never
+start a page transition. Screenshots pause the real CSS sheet entrance. A pixel-level desktop
+regression checks that the backdrop stays constant throughout that entrance. The full-width
+mobile sheet uses motion screenshots instead of the desktop background sample.
+Tests also cover rapid open/close while scrolled, quiet validation, live preference changes,
+and browsers without the API.
 
 Failures write expected/actual/diff images, traces, and an HTML report under
 `tmp/browser-results/` and `tmp/browser-report/`. A snapshot is a regression guard,

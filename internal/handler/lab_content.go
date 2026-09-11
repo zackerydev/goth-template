@@ -26,7 +26,7 @@ func lessons() []Lesson {
    hx-replace-url="true" />`, Response: "GET /lab?q=design&view=board → 200 text/html\n\nThe server filters tasks and returns the workspace.\nouterMorph keeps the focused search input and caret in place.\nReplace history for keystrokes; push history for navigation.", Try: "Type ‘design’ into the workspace search. Combine it with a status filter. Clear both to recover all cards."},
 		{ID: "validation", Name: "Editing + server validation", Summary: "A deep-linked detail panel is just another representation of the workspace. Invalid forms return 422 HTML, keeping the draft and explaining the error.", Markup: `<form method="post" action="/lab/task?id=1"
    hx-post="/lab/task?id=1" hx-target="#workspace"
-   hx-swap="outerHTML"
+   hx-swap="outerHTML transition:false"
    hx-status:422="target:#editor swap:outerHTML transition:false"
    hx-disable="find button">…</form>`, Response: "POST /lab/task?id=1 → 422 text/html\n\n<dialog open id=\"editor\">\n  <p role=\"alert\">Give this task a title…</p>\n  <form>…your submitted values…</form>\n</dialog>\n\nValid submission → 200 workspace + notification partial.", Try: "Open a card, enter a one-character title, and save. Then fix it and change the workflow status."},
 		{ID: "partials", Name: "One response, multiple regions", Summary: "Update the board and announce the result in the same round trip. Explicit htmx 4 partials keep distant regions in sync without a global state store.", Markup: `<main id="workspace">…updated cards and counts…</main>
