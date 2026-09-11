@@ -1,5 +1,6 @@
 [tools]
 go = "1.26.6"
+node = "22.20.0"
 "go:github.com/air-verse/air" = "v1.65.3"
 gofumpt = "0.9.1"
 "go:golang.org/x/tools/cmd/goimports" = "v0.36.0"
@@ -86,6 +87,18 @@ run = ["go mod tidy -diff", "go mod verify"]
 [tasks.build]
 description = "Build the application binary"
 run = "go build -o bin/app ./cmd/app"
+
+[tasks.spa-build]
+description = "Build the production React CSR bundle into assets/app"
+run = "npm --prefix web install && npm --prefix web run build"
+
+[tasks.eval]
+description = "Run the scripted HTMX vs SPA vs SPA+MCP agent matrix"
+run = "npm --prefix eval install && npm --prefix eval test"
+
+[tasks.eval-llm]
+description = "Run the agent matrix with pi + kimi-k3 so token and cost numbers are real"
+run = "npm --prefix eval install && npx --prefix eval tsx eval/src/run.ts --matrix --agent llm --model kimi-k3 --repeats 1 --out eval/results/latest.jsonl"
 
 [tasks.vulnerabilities]
 description = "Check reachable Go vulnerabilities"

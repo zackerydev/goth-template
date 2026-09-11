@@ -24,28 +24,44 @@ func TestEmbeddedTemplatesRenderPagesAndPartials(t *testing.T) {
 	}
 
 	var page bytes.Buffer
-	if err := renderer.Render(&page, "home", templates.PageData{Title: "GoTH Template"}); err != nil {
-		t.Fatalf("render home: %v", err)
+	if err := renderer.Render(&page, "contacts", map[string]any{
+		"Title": "Contacts",
+		"Flash": "Created New Contact!",
+		"Query": "ada",
+		"Contacts": []map[string]any{
+			{"ID": 1, "First": "Ada", "Last": "Lovelace", "Phone": "1", "Email": "ada@example.com"},
+		},
+		"HasMore":  true,
+		"NextPage": 2,
+	}); err != nil {
+		t.Fatalf("render contacts: %v", err)
 	}
 	for _, want := range []string{
 		"<!doctype html>",
 		`<html lang="en">`,
 		`id="main-content"`,
 		`hx-boost:inherited="swap:outerSync select:#main-content target:#main-content"`,
-		"Start building.",
-		`hx-get="/greeting"`,
+		"contacts.app",
+		"Ada",
+		"Created New Contact!",
+		`hx-get="/contacts"`,
+		"Load More",
 	} {
 		if !strings.Contains(page.String(), want) {
-			t.Errorf("home does not contain %q: %s", want, page.String())
+			t.Errorf("contacts does not contain %q: %s", want, page.String())
 		}
 	}
 
-	var greeting bytes.Buffer
-	if err := renderer.Render(&greeting, "greeting", nil); err != nil {
-		t.Fatalf("render greeting: %v", err)
+	var form bytes.Buffer
+	if err := renderer.Render(&form, "contacts-new", map[string]any{
+		"Title":   "New Contact",
+		"Flash":   "",
+		"Contact": stubContact{},
+	}); err != nil {
+		t.Fatalf("render new contact: %v", err)
 	}
-	if !strings.Contains(greeting.String(), `id="greeting"`) || strings.Contains(greeting.String(), "<html") {
-		t.Errorf("greeting = %q", greeting.String())
+	if !strings.Contains(form.String(), `action="/contacts/new"`) {
+		t.Errorf("new contact = %q", form.String())
 	}
 }
 
@@ -314,6 +330,18 @@ func fixtureFS(pages ...string) fstest.MapFS {
 		filesystem["pages/"+page+".html"] = &fstest.MapFile{Data: []byte(content)}
 	}
 	return filesystem
+}
+
+type stubContact struct {
+	ID    int64
+	First string
+	Last  string
+	Phone string
+	Email string
+}
+
+func (stubContact) Error(string) string {
+	return ""
 }
 
 type countingFS struct {

@@ -10,6 +10,18 @@ Lefthook = "Lefthook"
 gofumpt = "gofumpt"
 goquery = "goquery"
 rumdl = "rumdl"
+Akuma = "Akuma"
+Blanka = "Blanka"
+Cammy = "Cammy"
+Dhalsim = "Dhalsim"
+Guile = "Guile"
+Hibiki = "Hibiki"
+JSONL = "JSONL"
+Kasugano = "Kasugano"
+Kenji = "Kenji"
+Sagat = "Sagat"
+Xiang = "Xiang"
+Zangief = "Zangief"
 
 [files]
 extend-exclude = [
@@ -18,5 +30,8 @@ extend-exclude = [
   "tmp/**",
   "vendor/**",
   "assets/js/htmx.min.js",
+  "assets/app/**",
+  "eval/node_modules/**",
+  "web/node_modules/**",
   "go.sum",
 ]

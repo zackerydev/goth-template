@@ -32,4 +32,15 @@ func TestEmbeddedAssets(t *testing.T) {
 			t.Errorf("embedded asset %q does not contain %q", test.path, test.want)
 		}
 	}
+
+	shell, err := fs.ReadFile(assets.SPA(), "index.html")
+	if err != nil {
+		t.Fatalf("read SPA index: %v", err)
+	}
+	if !strings.Contains(string(shell), `id="root"`) {
+		t.Fatalf("SPA index missing root: %s", shell)
+	}
+	if strings.Contains(string(shell), "/api/v1") {
+		t.Fatal("SPA document leaked the JSON API path")
+	}
 }

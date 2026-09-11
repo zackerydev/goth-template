@@ -6,6 +6,11 @@ coverage.out
 *.prof
 .rumdl_cache/
 
+# Node installs and eval output
+/eval/node_modules/
+/web/node_modules/
+/eval/results/
+
 # Local environment, agent output, and mise configuration
 .env
 .env.*

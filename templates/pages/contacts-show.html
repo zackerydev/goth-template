@@ -1,0 +1,21 @@
+{{ define "contacts-show" }}{{ template "layout" . }}{{ end }}
+
+{{ define "content" }}
+<section class="workspace" aria-labelledby="contact-title">
+  <h1 id="contact-title">{{ .Contact.First }} {{ .Contact.Last }}</h1>
+  <dl class="contact-details">
+    <div>
+      <dt>Phone</dt>
+      <dd>{{ .Contact.Phone }}</dd>
+    </div>
+    <div>
+      <dt>Email</dt>
+      <dd>{{ .Contact.Email }}</dd>
+    </div>
+  </dl>
+  <p>
+    <a href="/contacts/{{ .Contact.ID }}/edit">Edit</a>
+    <a href="/contacts">Back</a>
+  </p>
+</section>
+{{ end }}

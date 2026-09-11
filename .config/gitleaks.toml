@@ -2,3 +2,7 @@ title = "GoTH Template secret scanning"
 
 [extend]
 useDefault = true
+
+[[allowlists]]
+description = "Known modernc.org/token module checksum"
+regexes = ['''Xl7Ap9dKaEs5kLoOQeQmPWevfnk/DM5qcLcYlA8ys6Y=''']

@@ -1,0 +1,14 @@
+{
+  "name": "contacts-agent-eval",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "eval": "tsx src/run.ts",
+    "test": "tsx src/run.ts --matrix --agent scripted --repeats 1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
