@@ -12,9 +12,15 @@
   <body hx-boost:inherited="swap:outerSync select:#main-content target:#main-content">
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <header class="site-header">
-      <a class="site-header__brand" href="/">GoTH Template</a>
+      <a class="site-header__brand" href="/contacts">
+        <span class="site-header__name">contacts.app</span>
+        <span class="site-header__tag">A Demo Contacts Application</span>
+      </a>
     </header>
-    <main id="main-content">{{ template "content" . }}</main>
+    <main id="main-content">
+      {{ template "flash" . }}
+      {{ template "content" . }}
+    </main>
   </body>
 </html>
 {{ end }}

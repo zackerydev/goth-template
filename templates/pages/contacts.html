@@ -1,0 +1,82 @@
+{{ define "contacts" }}{{ template "layout" . }}{{ end }}
+
+{{ define "content" }}
+<section class="workspace" aria-labelledby="contacts-title">
+  <div class="workspace__header">
+    <h1 id="contacts-title">Contacts</h1>
+    <p>
+      <a href="/contacts/new">Add Contact</a>
+      <span
+        id="contact-count"
+        hx-get="/contacts/count"
+        hx-trigger="revealed"
+        hx-swap="innerHTML"
+      >
+        <span class="htmx-indicator">counting…</span>
+      </span>
+    </p>
+  </div>
+
+  <form action="/contacts" method="get" class="tool-bar" role="search">
+    <label for="search">Search Term</label>
+    <input
+      id="search"
+      type="search"
+      name="q"
+      value="{{ .Query }}"
+      hx-get="/contacts"
+      hx-trigger="input changed delay:200ms, search"
+      hx-target="#contacts-rows"
+      hx-select="#contacts-rows"
+      hx-swap="outerHTML"
+      hx-push-url="true"
+      hx-indicator="#search-indicator"
+    />
+    <span id="search-indicator" class="htmx-indicator" aria-hidden="true">Searching…</span>
+    <button type="submit">Search</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>First</th>
+        <th>Last</th>
+        <th>Phone</th>
+        <th>Email</th>
+        <th><span class="visually-hidden">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody id="contacts-rows">
+      {{ range .Contacts }}
+      <tr>
+        <td>{{ .First }}</td>
+        <td>{{ .Last }}</td>
+        <td>{{ .Phone }}</td>
+        <td>{{ .Email }}</td>
+        <td>
+          <a href="/contacts/{{ .ID }}">View</a>
+          <a href="/contacts/{{ .ID }}/edit">Edit</a>
+        </td>
+      </tr>
+      {{ else }}
+      <tr>
+        <td colspan="5">No contacts found.</td>
+      </tr>
+      {{ end }}
+      {{ if .HasMore }}
+      <tr>
+        <td colspan="5">
+          <span
+            hx-target="closest tr"
+            hx-trigger="revealed"
+            hx-swap="outerHTML"
+            hx-select="tbody > tr"
+            hx-get="/contacts?page={{ .NextPage }}{{ if .Query }}&amp;q={{ urlquery .Query }}{{ end }}"
+          >Loading More…</span>
+        </td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</section>
+{{ end }}

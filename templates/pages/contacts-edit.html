@@ -1,0 +1,50 @@
+{{ define "contacts-edit" }}{{ template "layout" . }}{{ end }}
+
+{{ define "content" }}
+<section class="workspace" aria-labelledby="contact-form-title">
+  <h1 id="contact-form-title">Edit Contact</h1>
+  <form action="/contacts/{{ .Contact.ID }}/edit" method="post">
+    <fieldset>
+      <legend>Contact Values</legend>
+      <p>
+        <label for="email">Email</label>
+        <input
+          name="email"
+          id="email"
+          type="email"
+          placeholder="Email"
+          value="{{ .Contact.Email }}"
+          hx-get="/contacts/{{ .Contact.ID }}/email"
+          hx-target="next .error"
+          hx-trigger="change, keyup delay:200ms"
+        />
+        <span class="error">{{ .Contact.Error "email" }}</span>
+      </p>
+      <p>
+        <label for="first_name">First Name</label>
+        <input name="first_name" id="first_name" type="text" placeholder="First Name" value="{{ .Contact.First }}" />
+      </p>
+      <p>
+        <label for="last_name">Last Name</label>
+        <input name="last_name" id="last_name" type="text" placeholder="Last Name" value="{{ .Contact.Last }}" />
+      </p>
+      <p>
+        <label for="phone">Phone</label>
+        <input name="phone" id="phone" type="text" placeholder="Phone" value="{{ .Contact.Phone }}" />
+      </p>
+      <button type="submit">Save</button>
+    </fieldset>
+  </form>
+  <form action="/contacts/{{ .Contact.ID }}/delete" method="post" class="danger-form">
+    <button
+      id="delete-btn"
+      type="submit"
+      hx-delete="/contacts/{{ .Contact.ID }}"
+      hx-confirm="Are you sure you want to delete this contact?"
+    >
+      Delete Contact
+    </button>
+  </form>
+  <p><a href="/contacts">Back</a></p>
+</section>
+{{ end }}

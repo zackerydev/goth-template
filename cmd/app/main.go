@@ -1,14 +1,17 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
+	"github.com/zackerydev/goth-template/internal/contact"
 	"github.com/zackerydev/goth-template/internal/handler"
 	"github.com/zackerydev/goth-template/internal/server"
 	"github.com/zackerydev/goth-template/templates"
@@ -42,10 +45,10 @@ func main() {
 }
 
 func newApplication(development bool) (http.Handler, error) {
-	return newApplicationWithTemplateDirectory(development, "templates")
+	return newApplicationWithTemplateDirectory(development, "templates", databasePath())
 }
 
-func newApplicationWithTemplateDirectory(development bool, directory string) (http.Handler, error) {
+func newApplicationWithTemplateDirectory(development bool, directory, database string) (http.Handler, error) {
 	var (
 		renderer *templates.Renderer
 		err      error
@@ -58,7 +61,24 @@ func newApplicationWithTemplateDirectory(development bool, directory string) (ht
 	if err != nil {
 		return nil, err
 	}
-	return server.New(handler.Home(renderer), handler.Greeting(renderer)), nil
+	store, err := contact.Open(database)
+	if err != nil {
+		return nil, err
+	}
+	if err := store.SeedIfEmpty(context.Background()); err != nil {
+		_ = store.Close()
+		return nil, err
+	}
+	return server.New(func(mux *http.ServeMux) {
+		handler.Register(mux, renderer, store)
+	}), nil
+}
+
+func databasePath() string {
+	if value := os.Getenv("APP_DATABASE"); value != "" {
+		return value
+	}
+	return filepath.Join("tmp", "contacts.db")
 }
 
 func applicationPort() (int, error) {

@@ -15,16 +15,22 @@ components:
     in: internal/server
   handler:
     in: internal/handler
+  contact:
+    in: internal/contact
   assets:
     in: assets
   templates:
     in: templates
+vendors:
+  sqlite:
+    in: modernc.org/sqlite
 deps:
   cmd:
     mayDependOn:
       - server
       - handler
       - templates
+      - contact
   server:
     mayDependOn:
       - handler
@@ -32,6 +38,12 @@ deps:
   handler:
     mayDependOn:
       - templates
+      - contact
+  contact:
+    mayDependOn:
+      - contact
+    canUse:
+      - sqlite
   # Leaf components self-reference only to satisfy go-arch-lint's required rule shape.
   assets:
     mayDependOn:

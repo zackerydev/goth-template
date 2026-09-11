@@ -15,6 +15,7 @@ import (
 // PageData contains values shared by a page and its document title.
 type PageData struct {
 	Title string
+	Flash string
 }
 
 // Renderer executes the application's HTML templates.

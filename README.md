@@ -1,10 +1,11 @@
-# GoTH Template
+# contacts.app
 
-Base for a Go + html/template + [htmx 4](https://four.htmx.org/) app. Stdlib
-only: `net/http`, `html/template`, `embed`. Vendored htmx. No Node, no codegen,
-no Go module dependencies.
+Hypermedia Systems Contact.app on this GoTH template: Go `net/http`,
+`html/template`, vendored htmx 4, and SQLite through `database/sql`. One module
+dependency — `modernc.org/sqlite` — registers the driver. The rest is standard
+library.
 
-This file is the contract for agents building on the template. Follow it. Do
+This file is the contract for agents building on the example. Follow it. Do
 not re-litigate the stack.
 
 ## Do not introduce
@@ -12,7 +13,7 @@ not re-litigate the stack.
 - Routers or frameworks (Echo, Chi, Gin, Fiber)
 - HTML codegen (`templ`, gomponents) or a JS bundler
 - Runtime CDNs for htmx, CSS, or JS
-- ORMs, sqlx, pgx, Postgres, Goose
+- ORMs, sqlx, pgx, Postgres, Goose, golang-migrate, sqlc
 - Implicit htmx inheritance (`htmx.config.implicitInheritance`)
 - A boosted-request render path (always return the full page for navigation)
 - New Go dependencies unless the feature cannot be done in the standard library
@@ -20,59 +21,38 @@ not re-litigate the stack.
 Load `.agents/skills/htmx-guidance` when writing or changing HTML/htmx.
 Load `.agents/skills/htmx-debugging` when a request or swap misbehaves.
 
-## First steps
+## Run
 
-1. Replace the module path and rename `cmd/app` if needed. Linux: drop the
-   `''` after `sed -i`.
+```sh
+mise run setup
+mise run dev
+```
 
-   ```sh
-   old='github.com/zackerydev/goth-template'
-   new='github.com/you/your-app'
-   grep -RIl --exclude-dir=.git "$old" . | xargs sed -i '' "s|$old|$new|g"
-   ```
-
-2. `mise run setup` (pins Go/tools, installs Lefthook).
-3. `mise run dev` → <http://localhost:8888> (`APP_PORT`/`PORT` override;
-   worktrees get a derived port).
-4. Delete the demo fragment when you start real work: `GET /greeting`,
-   `handler.Greeting`, `templates/partials/greeting.html`, and tests that
-   mention it.
+Open the printed `APP_URL` (worktrees get a derived port; `APP_PORT`/`PORT`
+override). Production: `mise run run`. Database path: `APP_DATABASE`, default
+`tmp/contacts.db`. Empty databases are seeded with the demo address book.
 
 Air restarts on Go changes. `--dev` reparses HTML from disk per request;
-refresh the browser. Embedded CSS/JS need a restart. `mise run run` is
-production (embedded templates).
+refresh the browser. Embedded CSS/JS need a restart.
 
-## Add a page
+## Routes
 
-Three edits. Templates do not register routes.
+| Method | Path | Behavior |
+| --- | --- | --- |
+| GET | `/` | Redirect to `/contacts` |
+| GET | `/contacts` | Searchable list. `q` filters; `page` is 10-row windows |
+| POST | `/contacts/new` | Create; PRG to `/contacts` or 422 with field errors |
+| GET | `/contacts/{id}` | Detail |
+| POST | `/contacts/{id}/edit` | Update; PRG to the detail page or 422 |
+| POST | `/contacts/{id}/delete` | Delete without JavaScript; PRG to the list |
+| DELETE | `/contacts/{id}` | Delete via htmx; `HX-Redirect` when not boosted |
+| GET | `/contacts/{id}/email` | Inline unique-email fragment for the edit field |
+| GET | `/contacts/count` | Lazy `(N total Contacts)` fragment |
 
-1. `templates/pages/about.html` — named page + `content`. Do not copy the
-   document shell.
-
-   ```html
-   {{ define "about" }}{{ template "layout" . }}{{ end }}
-
-   {{ define "content" }}
-   <section aria-labelledby="about-title">
-     <h1 id="about-title">About</h1>
-   </section>
-   {{ end }}
-   ```
-
-2. Handler in `internal/handler`: buffer, `renderer.Render`, `PageData.Title`,
-   `text/html` on success, `500` + `"template rendering failed"` on parse/execute
-   errors. Copy `Home`.
-3. Construct the handler in `cmd/app`, register `GET /about` on the mux in
-   `internal/server`.
-
-Link with a normal `<a href="/about">`. Boosting is inherited from `<body>`.
-
-## Add a fragment
-
-Put markup in `templates/partials/<name>.html` as `{{ define "<name>" }}`.
-Register a dedicated route. Return only the fragment (no layout). Target a
-stable id with `hx-get`/`hx-post` and an explicit `hx-target` / `hx-swap` on
-that control — those attributes are not inherited unless you add `:inherited`.
+List search is a real GET form. htmx enhances the box: `hx-select` extracts
+`#contacts-rows` from the full page. The sentinel row loads the next page when
+revealed. Email uniqueness is checked on keyup. Delete keeps the POST form for
+no-JS and `hx-delete` when htmx is present.
 
 ## HTTP and htmx
 
@@ -96,30 +76,23 @@ that control — those attributes are not inherited unless you add `:inherited`.
 ## Packages
 
 ```text
-cmd/app            process: flags, port, http.Server
-internal/server    mux, /assets/
+cmd/app            process: flags, port, sqlite file, seed
+internal/server    mux, /assets/, / → /contacts
 internal/handler   HTTP adapters
+internal/contact   SQLite store via database/sql
 assets             embed css/, js/
 templates          html/template renderer
-.config            mise, Lefthook, linters
-.agents/skills     htmx 4 skills
 ```
 
 Dependency direction (enforced):
 
 ```text
 cmd/app → server → handler → templates
+        ↘ contact ↗
                ↘ assets
 ```
 
-Add `internal/service/<domain>` or `internal/model` only when a feature needs
-it, then declare the package in `.config/architecture.yml`. Do not put Echo or
-other HTTP libraries in `server`.
-
-## Persistence
-
-Skip until the first real schema. Then: SQLite, `database/sql`, sqlc,
-golang-migrate, all introduced together (mise tools, generate task, check).
+`internal/contact` is the only package that imports the SQLite driver.
 
 ## Tests
 
