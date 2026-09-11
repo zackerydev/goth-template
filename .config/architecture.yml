@@ -1,0 +1,41 @@
+version: 3
+workdir: .
+allow:
+  depOnAnyVendor: false
+  deepScan: true
+  ignoreNotFoundComponents: true
+exclude:
+  - .worktrees
+excludeFiles:
+  - "^.*_test\\.go$"
+components:
+  cmd:
+    in: cmd/*
+  server:
+    in: internal/server
+  handler:
+    in: internal/handler
+  assets:
+    in: assets
+  templates:
+    in: templates
+deps:
+  cmd:
+    mayDependOn:
+      - server
+      - handler
+      - templates
+  server:
+    mayDependOn:
+      - handler
+      - assets
+  handler:
+    mayDependOn:
+      - templates
+  # Leaf components self-reference only to satisfy go-arch-lint's required rule shape.
+  assets:
+    mayDependOn:
+      - assets
+  templates:
+    mayDependOn:
+      - templates

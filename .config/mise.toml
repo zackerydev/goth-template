@@ -1,0 +1,119 @@
+[tools]
+go = "1.26.6"
+"go:github.com/air-verse/air" = "v1.65.3"
+gofumpt = "0.9.1"
+"go:golang.org/x/tools/cmd/goimports" = "v0.36.0"
+lefthook = "2.1.10"
+golangci-lint = "2.12.2"
+cocogitto = "7.0.0"
+gitleaks = "8.30.1"
+"go:golang.org/x/vuln/cmd/govulncheck" = "v1.6.0"
+"go:github.com/vladopajic/go-test-coverage/v2" = "v2.18.8"
+"go:github.com/fe3dback/go-arch-lint" = "v1.16.0"
+"go:github.com/gohugoio/gotmplfmt" = "v0.4.1"
+rumdl = "0.2.34"
+typos = "1.48.0"
+
+[tasks.dev]
+description = "Run Air with request-time HTML reload"
+run = "bash -c 'source .config/worktree-env.sh && exec air -c .config/air.toml'"
+
+[tasks.init]
+description = "Initialize a new repo from this template (prompts for owner/repo)"
+run = "bash .config/setup.sh"
+
+[tasks.setup]
+description = "Install pinned tools and Git hooks"
+run = [
+  "sed '/<!-- EXAMPLES BEGIN -->/,/<!-- EXAMPLES END -->/d' README.md > README.md.tmp && mv README.md.tmp README.md",
+  "mise install",
+  "mise exec -- lefthook validate",
+  "mise exec -- lefthook install --force",
+]
+
+[tasks.test]
+description = "Run race-tested Go tests with coverage"
+run = "mkdir -p tmp && go test -race -shuffle=on -count=1 -timeout=2m -covermode=atomic -coverpkg=./... -coverprofile=tmp/cover.out ./..."
+
+[tasks.coverage]
+description = "Enforce eligible-code coverage thresholds"
+run = "mise exec -- go-test-coverage -c .config/coverage.yml"
+
+[tasks.test-coverage]
+description = "Run tests before enforcing coverage"
+run = [{ task = "test" }, { task = "coverage" }]
+
+[tasks.fix]
+description = "Fix and synchronize the whole repository"
+run = [
+  "mise exec -- rumdl -c .config/rumdl.toml fmt .",
+  "mise exec -- gotmplfmt -w templates",
+  "find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- gofumpt -w",
+  "find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- goimports -w",
+  "go mod tidy",
+]
+
+[tasks.format-check]
+description = "Verify handwritten Go, Markdown, and template formatting"
+run = [
+  "mise exec -- rumdl -c .config/rumdl.toml fmt --check .",
+  "test -z \"$(mise exec -- gotmplfmt -l templates)\"",
+  "find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- gofumpt -d",
+  "test -z \"$(find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- goimports -l)\"",
+]
+
+[tasks.config-check]
+description = "Validate task and orchestration configuration"
+run = [
+  "mise tasks validate",
+  "mise exec -- lefthook validate",
+  "mise exec -- golangci-lint config verify -c .config/golangci.yml",
+  "APP_RUN_SMOKE=1 mise run run",
+]
+
+[tasks.architecture]
+description = "Check package dependency direction"
+run = "mise exec -- go-arch-lint check --arch-file .config/architecture.yml"
+
+[tasks.lint]
+description = "Run curated static analysis"
+run = "mise exec -- golangci-lint run -c .config/golangci.yml"
+
+[tasks.prose]
+description = "Check Markdown and repository spelling"
+run = [
+  "mise exec -- rumdl -c .config/rumdl.toml check .",
+  "mise exec -- typos --config .config/typos.toml --force-exclude .",
+]
+
+[tasks.module-check]
+description = "Verify module integrity and tidiness"
+run = ["go mod tidy -diff", "go mod verify"]
+
+[tasks.build]
+description = "Build the application binary"
+run = "go build -o bin/app ./cmd/app"
+
+[tasks.security]
+description = "Check reachable Go vulnerabilities"
+run = "mise exec -- govulncheck ./..."
+
+[tasks.run]
+description = "Run the application server"
+run = "bash -c 'source .config/worktree-env.sh; if [ \"${APP_RUN_SMOKE:-0}\" = 1 ]; then exit 0; fi; exec go run ./cmd/app'"
+
+[tasks.check]
+description = "Run every independent repository quality gate in parallel"
+run = [
+  { tasks = [
+    "config-check",
+    "format-check",
+    "module-check",
+    "architecture",
+    "lint",
+    "prose",
+    "test-coverage",
+    "build",
+    "security",
+  ] },
+]

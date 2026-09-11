@@ -1,0 +1,24 @@
+pre-commit:
+  jobs:
+    - name: prepare
+      group:
+        piped: true
+        jobs:
+          - name: fix
+            run: mise run fix
+          - name: stage
+            run: git add -A
+
+    - name: verify
+      group:
+        parallel: true
+        jobs:
+          - name: staged secrets
+            run: git diff --cached --binary --no-color | mise exec -- gitleaks detect --config .config/gitleaks.toml --pipe --redact --no-banner
+          - name: repository checks
+            run: mise run check
+
+commit-msg:
+  jobs:
+    - name: conventional commit
+      run: 'mise exec -- cog --config .config/cog.toml verify --file {1}'
