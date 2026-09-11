@@ -317,42 +317,9 @@ body:has(.wire[open]) .notice { bottom: min(380px, 55dvh); }
   #wire-count { font-size: 11px; }
 }
 
-/* Stable names let the browser match server-rendered elements across swaps. */
-.appbar { view-transition-name: appbar; }
-.view-content { view-transition-name: content; }
-.task-card, td a { view-transition-class: task; }
-.wire { view-transition-name: wire; }
-.notice { view-transition-name: notice; }
-
-::view-transition { pointer-events: none; }
-::view-transition-group(*) {
-  animation-duration: 280ms;
-  animation-timing-function: cubic-bezier(.22, 1, .36, 1);
-}
-::view-transition-old(root),
-::view-transition-new(root),
-::view-transition-old(appbar),
-::view-transition-new(appbar),
-::view-transition-old(wire),
-::view-transition-new(wire) { animation: none; }
-::view-transition-old(root), ::view-transition-old(appbar), ::view-transition-old(wire) { opacity: 0; }
-::view-transition-old(content) { animation: none; opacity: 1; mix-blend-mode: normal; }
-::view-transition-new(content) { animation: content-in 180ms ease-out both; mix-blend-mode: normal; }
-::view-transition-group(.task) { z-index: 1; }
-::view-transition-new(notice):only-child { animation: notice-in 200ms ease-out both; }
-
-@keyframes content-in { from { opacity: 0; } to { opacity: 1; } }
-/* Animate the live sheet only. Its native backdrop and the workspace never animate. */
-.editor.entering:modal { animation: editor-in 140ms ease-out; }
-@keyframes editor-in { from { transform: translateX(12px); } to { transform: translateX(0); } }
-@keyframes notice-in { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-@media (max-width: 480px) {
-  .editor.entering:modal { animation-name: mobile-editor-in; }
-}
-@keyframes mobile-editor-in { from { transform: translateY(8px); } to { transform: translateY(0); } }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
-  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+/* All feedback is immediate, including htmx's injected indicator styles. */
+*, *::before, *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
 }

@@ -89,20 +89,12 @@ The extension-authoring and upgrade skills were also reviewed. This example neit
 an extension nor migrates htmx 2, so no compatibility layer or extension API is needed.
 Behavioral browser tests exercise these contracts rather than asserting source-code spellings.
 
-### Native view transitions
+### Immediate updates
 
-htmx's `transitions` config delegates swaps to `document.startViewTransition()`.
-CSS does the animation; there is no animation library or manual position tracking.
-
-- Stable `view-transition-name` values match task IDs across Board/List changes.
-- Editor links and forms explicitly use `transition:false`: selecting or saving a task
-  never captures, crossfades, or animates the page behind the modal.
-- Workspace content crossfades; the header and inspector stay visually anchored.
-- Only the live editor moves: a 140 ms, 12 px CSS entrance (8 px vertically on mobile).
-  Closing is immediate; validation does not replay the entrance. The backdrop stays still.
-- Search, filter resets, validation, and polling use `transition:false` to avoid distraction.
-- Reduced-motion preferences disable transitions, including changes while the page is open.
-- Browsers without the API keep ordinary htmx swaps and native dialog behavior.
+There are no animations. View transitions, CSS animations, fades, smooth scrolling, and
+htmx's default loading-indicator transitions are disabled for everyone. Navigation, editing,
+validation, and notifications update immediately. Scroll position and keyboard focus are
+preserved when opening and closing the editor.
 
 The editor initializes on `htmx:after:settle`, with a zero settle delay, so there is no
 intermediate non-modal frame. The normal `htmx:after:swap` callback still handles final UI
@@ -144,13 +136,9 @@ UPDATE_VISUALS=1 mise exec -- lefthook run pre-commit
 `tests/browser/snapshots/<platform>/`; the checked-in reference is macOS Chromium.
 Different operating systems need their own reviewed baselines because system fonts differ.
 Only event clock prefixes and request timings are normalized or masked, not whole panels.
-Static layout tests use reduced motion. Separate motion tests observe the real native API,
-reject failed captures, check shared task animations, and assert that editor actions never
-start a page transition. Screenshots pause the real CSS sheet entrance. A pixel-level desktop
-regression checks that the backdrop stays constant throughout that entrance. The full-width
-mobile sheet uses motion screenshots instead of the desktop background sample.
-Tests also cover rapid open/close while scrolled, quiet validation, live preference changes,
-and browsers without the API.
+Additional browser tests run without reduced-motion preferences and verify that navigation,
+editing, and loading feedback never start CSS animations or native view transitions. They
+also cover preference changes and rapid open/close while preserving scroll and focus.
 
 Failures write expected/actual/diff images, traces, and an HTML report under
 `tmp/browser-results/` and `tmp/browser-report/`. A snapshot is a regression guard,

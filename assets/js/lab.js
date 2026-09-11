@@ -5,13 +5,7 @@ htmx.config.noSwap = [204, 304, 400, 403, 404, 405, 413, '5xx'];
 // Initialize inserted dialogs in the same turn, before a non-modal frame can paint.
 htmx.config.defaultSettleDelay = 0;
 
-// htmx uses the browser's View Transition API; CSS owns the animation.
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-function configureMotion() {
-  htmx.config.transitions = !reducedMotion.matches;
-}
-configureMotion();
-reducedMotion.addEventListener('change', configureMotion);
+htmx.config.transitions = false;
 
 const starts = new WeakMap();
 const initializedDialogs = new WeakSet();
@@ -31,7 +25,6 @@ function initializeUI() {
   const editor = document.getElementById('editor');
   if (editor && !initializedDialogs.has(editor)) {
     initializedDialogs.add(editor);
-    if (!editorWasOpen) editor.classList.add('entering');
     editorWasOpen = true;
     returnFocusID ??= editor.dataset.taskId === '-1' ? 'new-task' : `task-${editor.dataset.taskId}`;
     editor.removeAttribute('open');

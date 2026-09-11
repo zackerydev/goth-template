@@ -91,7 +91,7 @@
 			<header class="column-heading"><h2><span class="status-dot {{ if eq .Name "Done" }}green{{ else if eq .Name "In progress" }}purple{{ end }}"></span>{{ .Name }} <span class="column-count">{{ len .Tasks }}</span></h2></header>
 			<div class="cards">
 				{{ range .Tasks }}
-					<a id="task-{{ .ID }}" class="task-card" style="view-transition-name: task-{{ .ID }}" href="/lab?view={{ $.View }}&amp;q={{ $.Query }}&amp;status={{ $.Status }}&amp;id={{ .ID }}" hx-get="/lab?view={{ $.View }}&amp;q={{ $.Query | urlquery }}&amp;status={{ $.Status | urlquery }}&amp;id={{ .ID }}" hx-target="#workspace" hx-swap="outerHTML transition:false" hx-push-url="true">
+					<a id="task-{{ .ID }}" class="task-card" href="/lab?view={{ $.View }}&amp;q={{ $.Query }}&amp;status={{ $.Status }}&amp;id={{ .ID }}" hx-get="/lab?view={{ $.View }}&amp;q={{ $.Query | urlquery }}&amp;status={{ $.Status | urlquery }}&amp;id={{ .ID }}" hx-target="#workspace" hx-swap="outerHTML transition:false" hx-push-url="true">
 						<div class="card-top"><span class="category">{{ .Category }}</span><span class="task-id">HL–{{ .ID }}</span></div>
 						<h3>{{ .Title }}</h3>
 						<div class="card-bottom"><span class="priority {{ .Priority }}">{{ .Priority }} priority</span><span class="card-arrow" aria-hidden="true">↗</span></div>
@@ -113,7 +113,7 @@
 			<thead><tr><th class="check-cell"><span class="sr-only">Select</span></th><th>Task</th><th>Status</th><th>Priority</th></tr></thead>
 			<tbody>
 				{{ range .Tasks }}
-					<tr><td class="check-cell"><label class="check-label"><input type="checkbox" name="task" value="{{ .ID }}" aria-label="Select {{ .Title }}" /></label></td><td><a id="task-{{ .ID }}" style="view-transition-name: task-{{ .ID }}" href="/lab?view=list&amp;q={{ $.Query }}&amp;status={{ $.Status }}&amp;id={{ .ID }}" hx-get="/lab?view=list&amp;q={{ $.Query | urlquery }}&amp;status={{ $.Status | urlquery }}&amp;id={{ .ID }}" hx-target="#workspace" hx-swap="outerHTML transition:false" hx-push-url="true"><span class="task-id">HL–{{ .ID }}</span>{{ .Title }}</a></td><td class="status-cell"><span class="table-status">{{ .Status }}</span></td><td><span class="priority {{ .Priority }}">{{ .Priority }}</span></td></tr>
+					<tr><td class="check-cell"><label class="check-label"><input type="checkbox" name="task" value="{{ .ID }}" aria-label="Select {{ .Title }}" /></label></td><td><a id="task-{{ .ID }}" href="/lab?view=list&amp;q={{ $.Query }}&amp;status={{ $.Status }}&amp;id={{ .ID }}" hx-get="/lab?view=list&amp;q={{ $.Query | urlquery }}&amp;status={{ $.Status | urlquery }}&amp;id={{ .ID }}" hx-target="#workspace" hx-swap="outerHTML transition:false" hx-push-url="true"><span class="task-id">HL–{{ .ID }}</span>{{ .Title }}</a></td><td class="status-cell"><span class="table-status">{{ .Status }}</span></td><td><span class="priority {{ .Priority }}">{{ .Priority }}</span></td></tr>
 				{{ else }}<tr><td colspan="4" class="empty-column">Nothing matches. Try a broader search.</td></tr>
 				{{ end }}
 			</tbody>

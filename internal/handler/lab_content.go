@@ -16,7 +16,7 @@ func seedTasks() []Task {
 
 func lessons() []Lesson {
 	return []Lesson{
-		{ID: "navigation", Name: "URL-driven navigation", Summary: "An application shell without a client router. Every view and task is a real URL. Direct visits get a document; htmx visits get the workspace. Native CSS view transitions connect the old and new HTML without a client router.", Markup: `<a href="/lab?view=list" hx-get="/lab?view=list"
+		{ID: "navigation", Name: "URL-driven navigation", Summary: "An application shell without a client router. Every view and task is a real URL. Direct visits get a document; htmx visits get the workspace.", Markup: `<a href="/lab?view=list" hx-get="/lab?view=list"
    hx-target="#workspace" hx-swap="outerHTML"
    hx-push-url="true">List view</a>`, Response: "GET /lab?view=list → 200 text/html\n\n<main id=\"workspace\">…list view…</main>\n\nWithout HX-Request: true, return the complete document.\nVary includes HX-Request, HX-Request-Type, and\nHX-History-Restore-Request; this sandbox also sends no-store.", Try: "Switch Board → List. Open a task. Copy the URL into a new tab, then use Back."},
 		{ID: "search", Name: "Live search + request sync", Summary: "Debounce input, include the whole filter form, and replace older requests. Search state lives in the URL, not a client-side store.", Markup: `<input name="q" hx-get="/lab"
