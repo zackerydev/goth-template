@@ -1,13 +1,56 @@
+glob_matcher: doublestar
+
 pre-commit:
+  parallel: true
   jobs:
-    - name: verify
-      group:
-        parallel: true
-        jobs:
-          - name: staged secrets
-            run: git diff --cached --binary --no-color | mise exec -- gitleaks detect --config .config/gitleaks.toml --pipe --redact --no-banner
-          - name: repository checks
-            run: mise run check
+    - name: staged secrets
+      run: git diff --cached --binary --no-color | mise exec -- gitleaks detect --config .config/gitleaks.toml --pipe --redact --no-banner
+
+    - name: configuration
+      glob: ".config/**"
+      run: mise run config-check
+
+    - name: Markdown formatting
+      glob: "**/*.md"
+      run: mise run format-markdown
+
+    - name: template formatting
+      glob: "templates/**"
+      run: mise run format-templates
+
+    - name: Go formatting
+      glob: "**/*.go"
+      run: mise run format-go
+
+    - name: module tidiness
+      glob:
+        - "**/*.go"
+        - "go.mod"
+        - "go.sum"
+      run: mise run module-check
+
+    - name: architecture
+      glob:
+        - "**/*.go"
+        - ".config/architecture.yml"
+      run: mise run architecture
+
+    - name: static analysis
+      glob:
+        - "**/*.go"
+        - "go.mod"
+        - "go.sum"
+        - ".config/golangci.yml"
+      run: mise run lint
+
+    - name: tests
+      glob:
+        - "**/*.go"
+        - "templates/**"
+        - "assets/**"
+        - "go.mod"
+        - "go.sum"
+      run: mise run test
 
 commit-msg:
   jobs:

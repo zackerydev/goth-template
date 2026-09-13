@@ -44,14 +44,24 @@ run = [
   "go mod tidy",
 ]
 
-[tasks.format-check]
-description = "Verify handwritten Go, Markdown, and template formatting"
+[tasks.format-markdown]
+description = "Verify Markdown formatting"
+run = "mise exec -- rumdl -c .config/rumdl.toml fmt --check ."
+
+[tasks.format-templates]
+description = "Verify template formatting"
+run = "test -z \"$(mise exec -- gotmplfmt -l templates)\""
+
+[tasks.format-go]
+description = "Verify Go formatting and imports"
 run = [
-  "mise exec -- rumdl -c .config/rumdl.toml fmt --check .",
-  "test -z \"$(mise exec -- gotmplfmt -l templates)\"",
-  "find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- gofumpt -d",
+  "test -z \"$(find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- gofumpt -l)\"",
   "test -z \"$(find assets cmd internal templates -type f -name '*.go' -print0 | xargs -0 mise exec -- goimports -l)\"",
 ]
+
+[tasks.format-check]
+description = "Verify repository formatting"
+run = [{ tasks = ["format-markdown", "format-templates", "format-go"] }]
 
 [tasks.config-check]
 description = "Validate task and orchestration configuration"
