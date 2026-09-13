@@ -34,21 +34,18 @@ Complete applications built from this template live on example branches:
 
 ## Precommit
 
-All validation is performed in precommit by lefthook.
-These are meant to be restrictive - the more validation performed by deterministic automation the better.
+Lefthook runs deterministic checks that prevent defective commits:
 
-- `go build`
-- `go test` (with coverage)
-- `gofumpt` strict go formatting
-- `rumdl` markdown formatter/typo checker
-- `goimports` import cleaner
-- `go mod tidy` tidy dependencies
-- `cog` validate conventional commit messages
-- `config-check` `mise`, `lefthook`, `golangci`
-- `gitleaks` secret scanning
-- `go-arch-lint` validating architectural boundaries between `cmd`, `server`, `handler`, `assets`, and `templates`
+- race-tested Go tests
+- Go, Markdown, and template formatting
+- focused static analysis
+- tidy dependencies
+- configuration validation
+- staged-diff secret scanning
+- architectural boundary validation
+- conventional commit validation
 
-The intent of all the validators is to tell the agent: "do one thing: commit".
+Hooks never modify or stage files. Run `mise run fix`, review the result, and stage it before committing.
 
 ## Layout
 
@@ -57,7 +54,7 @@ The intent of all the validators is to tell the agent: "do one thing: commit".
 - `internal/handler/` — HTTP adapters; request → renderer response.
 - `templates/` — stdlib `html/template` files.
 - `assets/` — embedded static: `css/`, `js/` (vendored htmx + `app.js` config).
-- `.config/` — mise tasks, lefthook, linters, coverage/architecture policy.
+- `.config/` — mise tasks, lefthook, linters, and architecture policy.
 
 ## Development
 

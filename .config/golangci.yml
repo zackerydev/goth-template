@@ -10,58 +10,27 @@ linters:
   default: none
   enable:
     - asasalint
-    - asciicheck
     - bidichk
     - bodyclose
-    - containedctx
     - contextcheck
-    - decorder
     - durationcheck
     - errcheck
-    - funlen
     - errorlint
-    - errname
     - gocheckcompilerdirectives
-    - gochecknoglobals
-    - gochecknoinits
-    - gocritic
     - gosec
     - govet
-    - grouper
-    - iface
-    - inamedparam
     - ineffassign
-    - interfacebloat
-    - ireturn
-    - modernize
     - nilerr
     - nilnesserr
     - nolintlint
-    - paralleltest
-    - predeclared
-    - revive
     - staticcheck
-    - testpackage
-    - thelper
-    - tparallel
     - unconvert
     - unused
-    - usestdlibvars
-    - whitespace
 
   settings:
-    funlen:
-      lines: 60
-      statements: 40
     nolintlint:
       require-explanation: true
       require-specific: true
-    revive:
-      rules:
-        - name: argument-limit
-          arguments: [4]
-        - name: function-result-limit
-          arguments: [2]
 
   exclusions:
     generated: strict

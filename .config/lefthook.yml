@@ -1,14 +1,5 @@
 pre-commit:
   jobs:
-    - name: prepare
-      group:
-        piped: true
-        jobs:
-          - name: fix
-            run: mise run fix
-          - name: stage
-            run: git add -A
-
     - name: verify
       group:
         parallel: true
